@@ -371,7 +371,8 @@ function makeUniqueItem(monsterName, slot){
   };
 }
 function itemDisplay(item){
-  return `<span class="${rarityColors[item.rarity]}">[${item.rarity}]</span> ${item.name} <span class="equip-bonus">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]} ${item.attackType==="근접"?`ATK:${item.stat[5]}`:""}${item.attackType==="원거리"?`RATK:${item.stat[6]}`:""}${item.attackType==="마법"?`MATK:${item.stat[7]}`:""}</span> ${item.skill?`<span class="equip-bonus">스킬:${item.skill}</span>`:""}${item.armorSkill?` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${item.armorSkill.value})</span>`:""}${item.enh?` <span class="enh-lv">+${item.enh}</span>`:""}`;
+  return `<span class="${rarityColors[item.rarity]}">[${item.rarity}]</span> ${item.name} <span class="equip-bonus">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]} ${item.attackType==="근접"?`ATK:${item.stat[5]}`:""}${item.attackType==="원거리"?`RATK:${item.stat[6]}`:""}${item.attackType==="마법"?`MATK:${item.stat[7]}`:""}</span> ${item.skill?`<span class="equip-bonus">스킬:${item.skill}</span>`:""}${item.armorSkill?` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${typeof item.armorSkill.value === "number" ? item.armorSkill.value.toFixed(1) : item.armorSkill.value})</span>`:""}
+${item.enh?` <span class="enh-lv">+${item.enh}</span>`:""}`;
 }
 
 // 인벤토리, 착용/판매/일괄판매
