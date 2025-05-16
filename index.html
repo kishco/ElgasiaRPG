@@ -57,6 +57,14 @@
   <div class="log" id="logbox"></div>
 </div>
 <script>
+const itemStatTable = {
+  "일반":     { base:[0, 2],    atk:[1, 3]   },
+  "레어":     { base:[2, 4],    atk:[3, 6]   },
+  "유니크":   { base:[4, 7],    atk:[6, 10]  },
+  "에픽":     { base:[7, 11],   atk:[10, 15] },
+  "레전더리": { base:[12, 18],  atk:[16, 22] },
+  "유일":     { base:[18, 27],  atk:[25, 35] }
+};
 const statNames = ["STR", "DEX", "INT", "VIT", "LUK"];
 const equipSlots = ["머리", "상의", "하의", "손", "신발", "무기", "방패"];
 const prefixes = ["불타는", "신속한", "고대의", "빛나는", "강인한", "재빠른", "현자의", "암흑의", "단단한", "용맹한"];
@@ -234,42 +242,65 @@ function rarityBonus(r){
   return 0;
 }
 // ---- 아이템 생성 (스킬 확률 및 유일 세트/스킬)
-function makeItem(allowMyth, isShop) {
+function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   let rate = allowMyth ? dungeonRate : rarityRate;
   let localRarityOrder = isShop ? ["일반","레어","유니크"] : rarityOrder;
   let localRate = isShop ? [70,25,5] : rate;
-  let r = Math.random() * 100;
-  let rarity = "일반"; let acc = 0;
+  let rarity = "일반";
+  let r = Math.random() * 100, acc = 0;
   for (let i=0;i<localRate.length;i++) { acc += localRate[i]; if (r < acc) { rarity = localRarityOrder[i]; break; } }
+  // 유일 등급: 일반 몬스터에선 절대 안나옴, 유일 몬스터에서만 등장
+  if(!uniqueMonsterName && rarity === "유일") rarity = "레전더리";
+  if(uniqueMonsterName) rarity = "유일";
+
   let slot = equipSlots[rint(0, equipSlots.length-1)];
   let pool = slotTypePool[slot];
   let baseObj = pool[rint(0, pool.length-1)];
   let itemType = baseObj.name;
   let itemAttackType = baseObj.type || null;
-  if(rarity === "유일") {
-    let monsterName = uniqueMonsters[rint(0, uniqueMonsters.length-1)];
-    return makeUniqueItem(monsterName, slot);
+
+  // 유일 아이템(이름/스탯/스킬 규칙 적용)
+  if(rarity === "유일" && uniqueMonsterName) {
+    let uniqPrefix = uniqueMonsterPrefixes[uniqueMonsterName] || "유일";
+    let baseName = baseObj.name;
+    let name = `${uniqPrefix}의 ${baseName}`;   // ← `로 감싸야 함!
+    let skill = "";
+    // 일반 무기 스킬 100% 부여(유일 스킬 X)
+    if(itemAttackType && skillPool[itemAttackType])
+      skill = skillPool[itemAttackType][rint(0, skillPool[itemAttackType].length-1)];
+    let stat = [];
+    let sconf = itemStatTable["유일"];
+    for(let i=0;i<5;i++) stat.push(rint(sconf.base[0],sconf.base[1]));
+    let atk = itemAttackType === "근접" ? rint(sconf.atk[0], sconf.atk[1]) : 0;
+    let ratk= itemAttackType === "원거리"? rint(sconf.atk[0], sconf.atk[1]) : 0;
+    let matk= itemAttackType === "마법"  ? rint(sconf.atk[0], sconf.atk[1]) : 0;
+    stat.push(atk); stat.push(ratk); stat.push(matk);
+    return {
+      name, rarity: "유일", slot, stat, type: baseName, attackType: itemAttackType,
+      skill, enh: 0, ilv: null, unique: true, uniqPrefix
+    };
   }
+
+  // 일반~레전더리 아이템
   let prefix = prefixes[rint(0,prefixes.length-1)];
   let suffix = suffixes[rint(0,suffixes.length-1)];
-  let name = `${prefix} ${suffix}의 ${itemType}`;
+  let name = `${prefix} ${suffix}의 ${itemType}`;   // ← `로 감싸야 함!
   let skill = null, skillBase = null, skillBonus=1, trigger = skillTriggerRate[rarity] || 0.05;
   if (itemAttackType && skillPool[itemAttackType]) {
     let chance = skillGiveRate[rarity] || 0.1;
     if(Math.random() < chance) {
       skillBase = skillPool[itemAttackType][rint(0, skillPool[itemAttackType].length-1)];
-      skill = prefix ? `${prefix} ${skillBase}` : skillBase;
+      skill = prefix ? `${prefix} ${skillBase}` : skillBase;   // ← `로 감싸야 함!
       if(prefix && prefix.includes("불타는")) skillBonus = 1.2;
     }
   }
   let stat = [];
-  let itemLevel = Math.max(1, Math.round(user.level * (0.7 + Math.random()*0.4)));
-  let bonus = rarityBonus(rarity) + Math.floor(itemLevel/9);
-  for (let i=0;i<5;i++) stat.push(rint(0, (i===0?4:2) + bonus));
+  let sconf = itemStatTable[rarity];
+  for (let i=0;i<5;i++) stat.push(rint(sconf.base[0],sconf.base[1]));
   let atk=0, ratk=0, matk=0;
-  if(itemAttackType=="근접") atk = rint(2, 8+bonus*2);
-  if(itemAttackType=="원거리") ratk = rint(2, 8+bonus*2);
-  if(itemAttackType=="마법") matk = rint(2, 8+bonus*2);
+  if(itemAttackType=="근접") atk = rint(sconf.atk[0],sconf.atk[1]);
+  if(itemAttackType=="원거리") ratk = rint(sconf.atk[0],sconf.atk[1]);
+  if(itemAttackType=="마법") matk = rint(sconf.atk[0],sconf.atk[1]);
   stat.push(Math.floor(atk * skillBonus));
   stat.push(Math.floor(ratk * skillBonus));
   stat.push(Math.floor(matk * skillBonus));
@@ -279,6 +310,7 @@ function makeItem(allowMyth, isShop) {
     skillTrigger: trigger, enh: 0, ilv: null, unique: false
   };
 }
+
 function makeUniqueItem(monsterName, slot){
   const prefix = uniqueMonsterPrefixes[monsterName] || "전설";
   let baseName = slotTypePool[slot][0].name;
@@ -670,7 +702,7 @@ function battle(type) {
   if(win){
     let gain = baseExp; let gold = baseGold; let dropMsg = "", stoneMsg="";
     if (Math.random() < (isDungeon?0.5:0.25)) {
-      let item = makeItem(isDungeon);
+      let item = makeItem(isDungeon, false, monster.unique ? monster.name : null);
       if (addInv(item)) dropMsg = `<br>아이템 획득! ${itemDisplay(item)}`;
     }
     if(Math.random()<(isDungeon?0.15:0.10)){
