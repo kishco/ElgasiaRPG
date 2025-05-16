@@ -65,6 +65,35 @@ const itemStatTable = {
   "레전더리": { base:[12, 18],  atk:[16, 22] },
   "유일":     { base:[18, 27],  atk:[25, 35] }
 };
+const armorSkillEffectScale = {
+  "일반":     1,
+  "레어":     1,
+  "유니크":   1.2,
+  "에픽":     1.5,
+  "레전더리": 2,
+  "유일":     3
+};
+const armorSkillPool = [
+  { name: "생명회복",     type: "regen",      base: [1, 2]  },  // 턴마다 %회복
+  { name: "피해흡혈",     type: "leech",      base: [1, 2]  },  // 피해의 % 흡수
+  { name: "받는피해감소", type: "dmgreduce",  base: [2, 4]  },  // %감소
+  { name: "첫피격무시",   type: "ignorehit",  base: [1, 1]  },  // n회
+  { name: "사망방지",     type: "deathproof", base: [1, 1]  },  // n회
+  { name: "공격반사",     type: "reflect",    base: [2, 3]  },  // %반사
+  { name: "회피증가",     type: "evadeup",    base: [3, 4]  },  // %상승
+  { name: "실드부여",     type: "shield",     base: [20, 24]}   // 실드량
+];
+const armorSkillLogEffects = {
+  "regen":        { icon:"💚",  color:"#5eff86",  msg: v=>`HP +${v}% 회복` },
+  "leech":        { icon:"🩸",  color:"#c9488a",  msg: v=>`피해의 ${v}% 흡혈` },
+  "dmgreduce":    { icon:"🛡️", color:"#a1f2ff",  msg: v=>`받는 피해 -${v}%` },
+  "ignorehit":    { icon:"🧱",  color:"#c8d7e2",  msg: v=>`첫 피격 무시 ${v}회` },
+  "deathproof":   { icon:"⚰️",  color:"#f0f055",  msg: v=>`사망방지 ${v}회` },
+  "reflect":      { icon:"🪞",  color:"#8ef6f2",  msg: v=>`공격반사 +${v}%` },
+  "evadeup":      { icon:"🏃‍♂️",color:"#8af8a7",  msg: v=>`회피 +${v}%` },
+  "shield":       { icon:"🛡️", color:"#e3ffd8",  msg: v=>`실드 +${v}` },
+};
+
 const statNames = ["STR", "DEX", "INT", "VIT", "LUK"];
 const equipSlots = ["머리", "상의", "하의", "손", "신발", "무기", "방패"];
 const prefixes = ["불타는", "신속한", "고대의", "빛나는", "강인한", "재빠른", "현자의", "암흑의", "단단한", "용맹한"];
@@ -75,7 +104,7 @@ const rarityRate = [60,20,5,1,0.01,0];
 const dungeonRate = [45,25,10,6,1,0.1];
 const inventoryLimit = 40;
 const skillTriggerRate = { "일반": 0.05, "레어": 0.10, "유니크": 0.15, "에픽": 0.20, "레전더리": 0.30, "유일": 0.5 };
-const skillGiveRate = { "일반": 0.10, "레어": 0.20, "유니크": 0.30, "에픽": 0.40, "레전더리": 0.50, "유일": 1.0 };
+const skillGiveRate = { "일반": 0.01, "레어": 0.03, "유니크": 0.07, "에픽": 0.12, "레전더리": 0.20, "유일": 1.0 };
 const slotTypePool = {
   "무기": [
     {name:"검",type:"근접"}, {name:"도끼",type:"근접"}, {name:"창",type:"근접"}, {name:"레이피어",type:"근접"},
@@ -249,7 +278,6 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   let rarity = "일반";
   let r = Math.random() * 100, acc = 0;
   for (let i=0;i<localRate.length;i++) { acc += localRate[i]; if (r < acc) { rarity = localRarityOrder[i]; break; } }
-  // 유일 등급: 일반 몬스터에선 절대 안나옴, 유일 몬스터에서만 등장
   if(!uniqueMonsterName && rarity === "유일") rarity = "레전더리";
   if(uniqueMonsterName) rarity = "유일";
 
@@ -263,9 +291,8 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   if(rarity === "유일" && uniqueMonsterName) {
     let uniqPrefix = uniqueMonsterPrefixes[uniqueMonsterName] || "유일";
     let baseName = baseObj.name;
-    let name = `${uniqPrefix}의 ${baseName}`;   // ← `로 감싸야 함!
+    let name = `${uniqPrefix}의 ${baseName}`;
     let skill = "";
-    // 일반 무기 스킬 100% 부여(유일 스킬 X)
     if(itemAttackType && skillPool[itemAttackType])
       skill = skillPool[itemAttackType][rint(0, skillPool[itemAttackType].length-1)];
     let stat = [];
@@ -284,13 +311,13 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   // 일반~레전더리 아이템
   let prefix = prefixes[rint(0,prefixes.length-1)];
   let suffix = suffixes[rint(0,suffixes.length-1)];
-  let name = `${prefix} ${suffix}의 ${itemType}`;   // ← `로 감싸야 함!
+  let name = `${prefix} ${suffix}의 ${itemType}`;
   let skill = null, skillBase = null, skillBonus=1, trigger = skillTriggerRate[rarity] || 0.05;
   if (itemAttackType && skillPool[itemAttackType]) {
     let chance = skillGiveRate[rarity] || 0.1;
     if(Math.random() < chance) {
       skillBase = skillPool[itemAttackType][rint(0, skillPool[itemAttackType].length-1)];
-      skill = prefix ? `${prefix} ${skillBase}` : skillBase;   // ← `로 감싸야 함!
+      skill = prefix ? `${prefix} ${skillBase}` : skillBase;
       if(prefix && prefix.includes("불타는")) skillBonus = 1.2;
     }
   }
@@ -304,12 +331,23 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   stat.push(Math.floor(atk * skillBonus));
   stat.push(Math.floor(ratk * skillBonus));
   stat.push(Math.floor(matk * skillBonus));
+
+  // 🟢 방어구 스킬 부여 (방어구만, 무기/방패/유일 제외)
+  let armorSkill = null;
+  if (["머리","상의","하의","손","신발"].includes(slot) && rarity !== "유일" && Math.random()<0.40) {
+    let skillObj = armorSkillPool[rint(0, armorSkillPool.length-1)];
+    let scale = armorSkillEffectScale[rarity] || 1;
+    let val = rint(skillObj.base[0]*scale, skillObj.base[1]*scale);
+    armorSkill = { name: skillObj.name, type: skillObj.type, value: val };
+  }
+
   return {
     name: name, rarity: rarity, slot: slot, stat: stat, type: itemType,
     attackType: itemAttackType, skill: skill, skillBase: skillBase, skillBonus: skillBonus,
-    skillTrigger: trigger, enh: 0, ilv: null, unique: false
+    skillTrigger: trigger, enh: 0, ilv: null, unique: false, armorSkill
   };
 }
+
 
 function makeUniqueItem(monsterName, slot){
   const prefix = uniqueMonsterPrefixes[monsterName] || "전설";
@@ -332,8 +370,9 @@ function makeUniqueItem(monsterName, slot){
   };
 }
 function itemDisplay(item){
-  return `<span class="${rarityColors[item.rarity]}">[${item.rarity}]</span> ${item.name} <span class="equip-bonus">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]} ${item.attackType==="근접"?`ATK:${item.stat[5]}`:""}${item.attackType==="원거리"?`RATK:${item.stat[6]}`:""}${item.attackType==="마법"?`MATK:${item.stat[7]}`:""}</span> ${item.skill?`<span class="equip-bonus">스킬:${item.skill}</span>`:""}${item.enh?` <span class="enh-lv">+${item.enh}</span>`:""}`;
+  return `<span class="${rarityColors[item.rarity]}">[${item.rarity}]</span> ${item.name} <span class="equip-bonus">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]} ${item.attackType==="근접"?`ATK:${item.stat[5]}`:""}${item.attackType==="원거리"?`RATK:${item.stat[6]}`:""}${item.attackType==="마법"?`MATK:${item.stat[7]}`:""}</span> ${item.skill?`<span class="equip-bonus">스킬:${item.skill}</span>`:""}${item.armorSkill?` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${item.armorSkill.value})</span>`:""}${item.enh?` <span class="enh-lv">+${item.enh}</span>`:""}`;
 }
+
 // 인벤토리, 착용/판매/일괄판매
 function showInv() {
   let invhtml = "";
@@ -606,11 +645,78 @@ function battle(type) {
   const maxTurn = 10;
   let setBonusKey = checkUniqueSetBonus();
   let hasGwanghui = setBonusKey === "광휘";
+
+  // 모든 효과 변수(누적)
+  let shield = 0, leechHeal = 0, reducePct = 0, reflectPct = 0, healupPct = 0, evadeAdd = 0, critDownPct = 0;
+  let statusRes = 0, elementRes = 0, pierceRes = 0, ignoreHit = 0, deathProof = 0, skillRed = 0;
+  let manaRegen = 0, enhStack = 0, cdReduce = 0, dotRes = 0, shieldRegen = 0;
+
+  // 방어구 효과 누적 세팅 함수
+  function applyArmorSkillAll(when, atkDmg, isSkillAttack) {
+    for(let slot of ["머리","상의","하의","손","신발"]) {
+      let eq = user.equip[slot];
+      if(eq && eq.armorSkill) {
+        let sk = eq.armorSkill, v=sk.value, eff=armorSkillLogEffects[sk.type];
+        if(Math.random() < (sk.trigger||0.1)) {
+          // 모든 효과값 누적 (when: start/attack/defend)
+          switch(sk.type) {
+            case "regen":
+              if(when=="start") {
+                let heal = Math.floor(user.maxhp * (v/100));
+                userhp = Math.min(user.maxhp, userhp+heal);
+                battleLog.push(`<b>[${slot} 방어구 효과]</b> <span style="color:${eff.color};font-weight:bold;">${eff.icon} ${eff.msg(v)}</span> <span style="color:#5eff86;">(HP +${heal})</span>`);
+              }
+              break;
+            case "leech":
+              if(when=="attack") {
+                leechHeal += v;
+                battleLog.push(`<b>[${slot} 방어구 효과]</b> <span style="color:${eff.color};font-weight:bold;">${eff.icon} ${eff.msg(v)}</span>`);
+              }
+              break;
+            case "skillheal":
+              if(isSkillAttack && when=="attack") {
+                let sheal = Math.floor(atkDmg * (v/100));
+                userhp = Math.min(user.maxhp, userhp+sheal);
+                battleLog.push(`<b>[${slot} 방어구 효과]</b> <span style="color:${eff.color};font-weight:bold;">${eff.icon} ${eff.msg(v)}</span> <span style="color:#5eff86;">(HP +${sheal})</span>`);
+              }
+              break;
+            case "dmgreduce":      if(when=="defend") reducePct += v; break;
+            case "critdown":       if(when=="defend") critDownPct += v; break;
+            case "statusres":      if(when=="start") statusRes += v; break;
+            case "elementres":     if(when=="start") elementRes += v; break;
+            case "pierceres":      if(when=="defend") pierceRes += v; break;
+            case "ignorehit":      if(when=="defend") ignoreHit += v; break;
+            case "deathproof":     if(when=="defend") deathProof += v; break;
+            case "skillred":       if(when=="defend") skillRed += v; break;
+            case "reflect":        if(when=="defend") reflectPct += v; break;
+            case "manaregen":      if(when=="start") manaRegen += v; break;
+            case "enhstack":       if(when=="start") enhStack += v; break;
+            case "cdreduce":       if(when=="start") cdReduce += v; break;
+            case "dotres":         if(when=="start") dotRes += v; break;
+            case "evadeup":        if(when=="start") evadeAdd += v; break;
+            case "shield":         if(when=="start") { shield += v; battleLog.push(`<b>[${slot} 방어구 효과]</b> <span style="color:${eff.color};font-weight:bold;">${eff.icon} ${eff.msg(v)}</span>`);} break;
+            case "shieldregen":    if(when=="start") shieldRegen += v; break;
+            case "healup":         if(when=="start") healupPct += v; break;
+            default: break;
+          }
+          // 기타도 모두 로그
+          if(!["regen","leech","skillheal","shield"].includes(sk.type)) {
+            battleLog.push(`<b>[${slot} 방어구 효과]</b> <span style="color:${eff.color};font-weight:bold;">${eff.icon} ${eff.msg(v)}</span>`);
+          }
+        }
+      }
+    }
+  }
+
   for(; turn<=maxTurn && userhp>0 && monhp>0; turn++){
-    // INT(지력): 턴 시작 시 20% 회복 확률
+    // 턴 시작 시 방어구 효과 누적
+    applyArmorSkillAll('start',0,false);
+
+    // INT(지력): 턴 시작 회복 (healup 영향)
     let intChance = Math.min(user.stats[2]/9999 * 0.7, 0.7);
     if(Math.random() < intChance) {
-      let heal = Math.floor(user.maxhp * 0.2);
+      let baseHeal = Math.floor(user.maxhp * 0.2);
+      let heal = Math.floor(baseHeal * (1 + healupPct/100));
       userhp = Math.min(user.maxhp, userhp + heal);
       battleLog.push(`<b>[${turn}턴]</b> <span class="skill-log">✨ [마력 효과] HP ${heal} 회복!</span> (내 HP:${userhp})`);
     }
@@ -621,77 +727,106 @@ function battle(type) {
     }
 
     // 턴 당 공격 횟수 계산
-    let attacksThisTurn = 1; // 기본 1회
-    let attackEffectTag = []; // 각 공격별 효과 표시용
-    // 광휘 세트 효과: 반드시 1회 추가타 (항상 발동)
-    if(hasGwanghui) {
-      attacksThisTurn += 1;
-      attackEffectTag.push("광휘 세트");
-    }
-    // 민첩(DEX): 별도 확률로 1회 추가 공격 (한 턴 최대 1회, 광휘와 별개로)
+    let attacksThisTurn = 1;
+    let attackEffectTag = [];
+    if(hasGwanghui) attacksThisTurn += 1;
     let dexChance = Math.min(user.stats[1]/9999 * 0.7, 0.7);
     let dexExtra = (Math.random() < dexChance) ? 1 : 0;
-    if(dexExtra) {
-      attacksThisTurn += 1;
-      attackEffectTag.push("민첩 추가타");
-    }
-    // 공격 루프
+    if(dexExtra) attacksThisTurn += 1;
+
     for(let atkNum=0; atkNum<attacksThisTurn; atkNum++){
-      // 각 공격이 어떤 효과(세트, 민첩 등)인지 체크
+      // 공격 시 방어구 효과
+      let attackSkill = false;
       let effects = [];
-      if(hasGwanghui && atkNum === 1) effects.push(`<span class="set-bonus">🌟 [광휘 세트 추가타]</span>`);
-      if(dexExtra && atkNum === (hasGwanghui?2:1)) effects.push(`<span class="skill-log">⚡ [민첩 추가타]</span>`);
-      // STR(힘): 강공격 확률(피해 2배)
-      let strChance = Math.min(user.stats[0]/9999 * 0.7, 0.7);
       let dmg = rint(myATK-2, myATK+3);
+      let strChance = Math.min(user.stats[0]/9999 * 0.7, 0.7);
       let isStrong = (Math.random() < strChance);
-      if(isStrong) {
-        dmg = dmg*2;
-        effects.push(`<span class="skill-log">💥 [힘: 강공격]</span>`);
-      }
-      // 무기 스킬 발동
+      if(isStrong) dmg = dmg*2;
       let isSkill = weapon && weapon.skill && Math.random() < (weapon.skillTrigger||0);
       if(isSkill){
         dmg = Math.floor(dmg*1.8) + rint(1,5);
-        effects.push(`<span class="skill-log">🔥 [무기스킬 발동: ${weapon.skill}]</span>`);
+        attackSkill = true;
         skillTurn.push(turn);
         finalSkillMsg = `[스킬 발동] ${weapon.skill}로 강력한 일격!`;
       }
-      // 흑섬 세트(30% 확률 스턴)
-      if(setBonusKey==="흑섬" && Math.random()<0.3){
-        stunned = 1;
-        effects.push(`<span class="set-bonus">⏳ [흑섬 세트: 스턴!]</span>`);
+      if(setBonusKey==="흑섬" && Math.random()<0.3){ stunned = 1; }
+      applyArmorSkillAll('attack', dmg, attackSkill);
+
+      // 흡혈
+      if(leechHeal > 0) {
+        let leechAmount = Math.floor(dmg * (leechHeal/100));
+        userhp = Math.min(user.maxhp, userhp+leechAmount);
+        effects.push(`<span style="color:#c9488a;font-weight:bold;">🩸 [흡혈] HP +${leechAmount}</span>`);
+        leechHeal = 0;
       }
+      // 스킬 힐
+      // (이미 위에서 적용)
+
       monhp -= dmg;
       let monsterNameDisplay = monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name;
-      battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${effects.join(" ")}<span style="font-weight:bold;">${user.name}의 공격!</span> <span class="dmg-log">${monsterNameDisplay}에게 ${dmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
+      battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> <span style="font-weight:bold;">${user.name}의 공격!</span> <span class="dmg-log">${monsterNameDisplay}에게 ${dmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)}) ${effects.join(" ")}`);
       if(monhp<=0){ break;}
     }
     if(monhp<=0) break;
     if(stunned > 0){ stunned--; continue; }
-    // LUK(운): 회피 확률(최대 70%)
-    let evadeChance = Math.min(user.stats[4]/9999 * 0.7, 0.7);
+
+    // LUK(운) + evadeUp(방어구) 회피
+    let evadeChance = Math.min(user.stats[4]/9999 * 0.7, 0.7) + (evadeAdd/100);
     let monDmg = Math.max(1, monster.atk - rint(Math.floor(myDEF/2), myDEF+1));
+
+    // 크리피해 감소(critDown): 10%확률 치명타라면 감소
+    let isCrit = Math.random() < 0.10;
+    if(isCrit) monDmg = Math.floor(monDmg * (1.5 - critDownPct/100));
+    // 방관저항 적용(pierceRes)
+    if(Math.random() < 0.2 && pierceRes>0) monDmg = Math.floor(monDmg * (1-pierceRes/100));
+    // 도트데미지저항(dotRes)
+    if(Math.random() < 0.08 && dotRes>0) monDmg = Math.floor(monDmg * (1-dotRes/100));
+    // 속성저항(elementRes)
+    if(Math.random() < 0.07 && elementRes>0) monDmg = Math.floor(monDmg * (1-elementRes/100));
+
+    // 회피
     let evaded = (Math.random() < evadeChance);
     if(evaded) {
       battleLog.push(`<span class="dmg-log">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! → <b>🌀 [운: 회피!]</b> (내 HP:${Math.max(userhp,0)})</span>`);
       continue;
     }
-    // 수암 세트(40% 반사)
-    let reflectTxt = "";
-    if(setBonusKey==="수암" && Math.random()<0.4) {
-      let reflectDmg = Math.floor(monDmg*0.5);
+
+    // 방어구 효과(피해감소/반사/스킬감소 등)
+    applyArmorSkillAll('defend', monDmg, false);
+
+    // 피해감소
+    let totalReduce = reducePct;
+    if(totalReduce > 0) monDmg = Math.max(1, Math.floor(monDmg * (1-totalReduce/100)));
+    // 스킬피해감소
+    if(skillRed > 0 && isCrit) monDmg = Math.max(1, Math.floor(monDmg * (1-skillRed/100)));
+    // 실드 우선 차감
+    if(shield > 0) {
+      let before = monDmg;
+      let absorb = Math.min(shield, monDmg);
+      shield -= absorb;
+      monDmg -= absorb;
+      battleLog.push(`<span style="color:#e3ffd8;font-weight:bold;">🛡️ [실드] 피해 ${absorb} 흡수 (잔여 ${shield})</span>`);
+      if(monDmg<=0) monDmg=0;
+    }
+    // 반사
+    let totalReflect = reflectPct;
+    if(setBonusKey==="수암" && Math.random()<0.4) totalReflect += 50;
+    if(totalReflect > 0) {
+      let reflectDmg = Math.floor(monDmg * (totalReflect/100));
       monhp -= reflectDmg;
-      reflectTxt = ` <span class="set-bonus">💫 [수암 세트: ${reflectDmg} 반사!]</span>`;
+      battleLog.push(`<span class="set-bonus">💫 [반사: ${reflectDmg}]</span>`);
     }
     userhp -= monDmg;
-    battleLog.push(`${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! <span class="dmg-log">${user.name}에게 ${monDmg}의 피해</span>${reflectTxt} (내 HP:${Math.max(userhp,0)})`);
+    battleLog.push(`${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! <span class="dmg-log">${user.name}에게 ${monDmg}의 피해</span> (내 HP:${Math.max(userhp,0)})`);
     // 토암 세트(1회 부활)
     if(userhp<=0 && setBonusKey==="토암" && !rebirthUsed){
       rebirthUsed = true; userhp = Math.floor(user.maxhp*0.5);
       battleLog.push(`<span class="set-bonus">🪨 [토암 세트: 1회 부활! HP ${userhp}로 부활]</span>`);
     }
     if(userhp<=0){ userhp=0; break;}
+    // 효과 변수 리셋
+    reducePct = 0; reflectPct = 0; healupPct = 0; evadeAdd = 0; critDownPct = 0;
+    skillRed = 0; pierceRes = 0; dotRes = 0;
   }
   let win = (monhp<=0 && turn<=maxTurn);
   if(turn>maxTurn) win = false;
