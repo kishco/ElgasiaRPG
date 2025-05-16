@@ -90,7 +90,7 @@ const armorSkillLogEffects = {
   "ignorehit":    { icon:"🧱",  color:"#c8d7e2",  msg: v=>`첫 피격 무시` },
   "deathproof":   { icon:"⚰️",  color:"#f0f055",  msg: v=>`사망방지` },
   "reflect":      { icon:"🪞",  color:"#8ef6f2",  msg: v=>`공격반사 +${v}%` },
-  "evadeup":      { icon:"🏃‍♂️",color:"#8af8a7",  msg: v=>`회피 +${v}%` },
+  "evadeup":      { icon:"🏃‍♂️",color:"#8af8a7",  msg: v=>`회피 +${v.toFixed(1)}%` },
   "shield":       { icon:"🛡️", color:"#e3ffd8",  msg: v=>`실드 +${v}` },
 };
 
