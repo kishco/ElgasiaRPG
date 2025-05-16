@@ -124,9 +124,9 @@ function rint(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function makeMonster(level, isDungeon = false) {
   if(isDungeon && Math.random() < 0.01) {
     let name = uniqueMonsters[rint(0, uniqueMonsters.length-1)];
-    let hp = Math.floor(50 + level*10 + rint(10,30));
-    let atk = Math.floor(15 + level*5 + rint(5,15));
-    let def = Math.floor(level/3 + rint(2,6));
+    let hp = Math.floor(40 + level*4 + rint(10,40));
+    let atk = Math.floor(8 + level*2 + rint(5,10));
+    let def = Math.floor(level/6 + rint(2,8));
     return { name, hp, atk, def, unique: true };
   }
   let prefix = monsterPrefixes[rint(0, monsterPrefixes.length - 1)];
