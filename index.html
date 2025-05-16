@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Elgasia - Text RPG 1.35</title>
+  <title>Elgasia - Text RPG ver1.015</title>
   <style>
     body { font-family: 'Malgun Gothic', sans-serif; background: #232236; color: #fff; margin: 0; padding: 0;}
     #main { max-width: 900px; margin: 40px auto; background: #181828; padding: 30px; border-radius: 20px; box-shadow: 0 0 30px #0008;}
@@ -35,6 +35,7 @@
     .dmg-log { color:#fba; }
     .dead-log { color:#fa4247; font-weight:bold; }
     .unique-monster { color:#ff5555; font-weight:bold; }
+    .set-bonus { color: #ffe161; font-weight: bold;}
   </style>
 </head>
 <body>
@@ -66,6 +67,7 @@ const rarityRate = [60,20,5,1,0.01,0];
 const dungeonRate = [45,25,10,6,1,0.1];
 const inventoryLimit = 40;
 const skillTriggerRate = { "일반": 0.05, "레어": 0.10, "유니크": 0.15, "에픽": 0.20, "레전더리": 0.30, "유일": 0.5 };
+const skillGiveRate = { "일반": 0.10, "레어": 0.20, "유니크": 0.30, "에픽": 0.40, "레전더리": 0.50, "유일": 1.0 };
 const slotTypePool = {
   "무기": [
     {name:"검",type:"근접"}, {name:"도끼",type:"근접"}, {name:"창",type:"근접"}, {name:"레이피어",type:"근접"},
@@ -101,9 +103,16 @@ const uniqueMonsterPrefixes = {
   "수암룡 타나로토스": "수암",
   "암토룡 우로보로스": "토암"
 };
+// 유일 세트 효과
+const uniqueSetBonus = {
+  "광휘": { name: "광휘 세트", desc: "1턴 2회 공격" },
+  "흑섬": { name: "흑섬 세트", desc: "공격 시 30% 확률로 1턴 스턴" },
+  "수암": { name: "수암 세트", desc: "피격 시 40% 확률로 50% 반사" },
+  "토암": { name: "토암 세트", desc: "전투 중 1회 사망 시 50% 부활" }
+};
 let user = null; let saveSlot = 1;
 function rint(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-// ---- 몬스터 생성
+// 몬스터 생성
 function makeMonster(level, isDungeon = false) {
   if(isDungeon && Math.random() < 0.01) {
     let name = uniqueMonsters[rint(0, uniqueMonsters.length-1)];
@@ -120,7 +129,7 @@ function makeMonster(level, isDungeon = false) {
   let def = Math.floor(level/5 + rint(0,1));
   return { name, hp, atk, def, unique: false };
 }
-// ---- 세이브/불러오기/슬롯삭제
+// 세이브/불러오기/슬롯삭제
 window.onload = function() { renderSaveSlotSelect(); };
 function renderSaveSlotSelect() {
   let html = `<div class="save-slot-select"><b>불러올 슬롯을 선택하세요</b><br>`;
@@ -150,6 +159,7 @@ function loadGame(slot) {
   let data = localStorage.getItem("elgasia_save_"+slot);
   if (data) {
     user = JSON.parse(data); saveSlot = slot;
+    if(!user.storage) user.storage=[];
     showUI(); updateUser();
     log(`<span style='color:#aff'>불러오기 완료! 슬롯 ${slot}</span>`);
   }
@@ -170,13 +180,14 @@ function startGame(slot) {
   saveSlot = slot;
   let data = localStorage.getItem("elgasia_save_"+slot);
   if (data) {
-    user = JSON.parse(data); showUI(); updateUser();
+    user = JSON.parse(data); if(!user.storage) user.storage=[];
+    showUI(); updateUser();
     log(`<span style='color:#aff'>불러오기 완료! 슬롯 ${slot}</span>`);
   } else {
     user = {
       name: "용사", level: 1, exp: 0, rebirth: 0, gold: 100,
       stats: [1,1,1,1,1], statmax: 9999, hp: 30, maxhp: 30,
-      equip: {}, inv: [], town: {restcount:0,skillstone:1}, stones: 0
+      equip: {}, inv: [], town: {restcount:0,skillstone:1}, stones: 0, storage: []
     };
     showUI(); updateUser();
     log(`<b>환영합니다! 캐릭터 이름을 먼저 정해주세요.</b> <br><div class="namebox"><input type="text" id="newname" maxlength="10" placeholder="캐릭터 이름"/><button class="inv-btn" onclick="setCharName()">확인</button></div>`);
@@ -206,6 +217,7 @@ function promptNameChange() {
 function expNeed(lv){ return Math.floor(Math.pow(lv,1.5)*12)+lv*8; }
 function log(msg){ document.getElementById("logbox").innerHTML = msg; }
 function updateUser() {
+  if(!user.storage) user.storage=[];
   document.getElementById("userinfo").innerHTML = `<div class="stat-box">
     <span>이름 <b>${user.name}</b> <button class="inv-btn" onclick="promptNameChange()">변경</button></span>
     <span>레벨 <b>${user.level}</b></span>
@@ -213,25 +225,27 @@ function updateUser() {
     <span>골드 <b>${user.gold}</b></span>
     <span>HP <b>${user.hp}/${user.maxhp}</b></span>
     <span>강화석 <b>${user.stones||0}</b></span>
+    <span>창고 <b>${user.storage.length}/100</b></span>
   </div>`;
 }
-// ---- 장비/아이템 생성
 function rarityBonus(r){
   if(r=="일반")return 0; if(r=="레어")return 1; if(r=="유니크")return 2;
   if(r=="에픽")return 3; if(r=="레전더리")return 4; if(r=="유일")return 5;
   return 0;
 }
-function makeItem(allowMyth) {
+// ---- 아이템 생성 (스킬 확률 및 유일 세트/스킬)
+function makeItem(allowMyth, isShop) {
   let rate = allowMyth ? dungeonRate : rarityRate;
+  let localRarityOrder = isShop ? ["일반","레어","유니크"] : rarityOrder;
+  let localRate = isShop ? [70,25,5] : rate;
   let r = Math.random() * 100;
   let rarity = "일반"; let acc = 0;
-  for (let i=0;i<rate.length;i++) { acc += rate[i]; if (r < acc) { rarity = rarityOrder[i]; break; } }
+  for (let i=0;i<localRate.length;i++) { acc += localRate[i]; if (r < acc) { rarity = localRarityOrder[i]; break; } }
   let slot = equipSlots[rint(0, equipSlots.length-1)];
   let pool = slotTypePool[slot];
   let baseObj = pool[rint(0, pool.length-1)];
   let itemType = baseObj.name;
   let itemAttackType = baseObj.type || null;
-  // 유일 장비는 접두어 처리
   if(rarity === "유일") {
     let monsterName = uniqueMonsters[rint(0, uniqueMonsters.length-1)];
     return makeUniqueItem(monsterName, slot);
@@ -239,10 +253,14 @@ function makeItem(allowMyth) {
   let prefix = prefixes[rint(0,prefixes.length-1)];
   let suffix = suffixes[rint(0,suffixes.length-1)];
   let name = `${prefix} ${suffix}의 ${itemType}`;
-  let skillBase = null, skill = null;
+  let skill = null, skillBase = null, skillBonus=1, trigger = skillTriggerRate[rarity] || 0.05;
   if (itemAttackType && skillPool[itemAttackType]) {
-    skillBase = skillPool[itemAttackType][rint(0, skillPool[itemAttackType].length-1)];
-    skill = prefix ? `${prefix} ${skillBase}` : skillBase;
+    let chance = skillGiveRate[rarity] || 0.1;
+    if(Math.random() < chance) {
+      skillBase = skillPool[itemAttackType][rint(0, skillPool[itemAttackType].length-1)];
+      skill = prefix ? `${prefix} ${skillBase}` : skillBase;
+      if(prefix && prefix.includes("불타는")) skillBonus = 1.2;
+    }
   }
   let stat = [];
   let itemLevel = Math.max(1, Math.round(user.level * (0.7 + Math.random()*0.4)));
@@ -252,9 +270,6 @@ function makeItem(allowMyth) {
   if(itemAttackType=="근접") atk = rint(2, 8+bonus*2);
   if(itemAttackType=="원거리") ratk = rint(2, 8+bonus*2);
   if(itemAttackType=="마법") matk = rint(2, 8+bonus*2);
-  let skillBonus = 1;
-  if(prefix && prefix.includes("불타는")) skillBonus = 1.2;
-  let trigger = skillTriggerRate[rarity] || 0.05;
   stat.push(Math.floor(atk * skillBonus));
   stat.push(Math.floor(ratk * skillBonus));
   stat.push(Math.floor(matk * skillBonus));
@@ -281,13 +296,13 @@ function makeUniqueItem(monsterName, slot){
   if(slot === "무기") atk = 25;
   return {
     name, rarity: "유일", slot, stat, type: baseName,
-    attackType: slot === "무기" ? "근접" : null, skill, enh: 0, ilv: null, unique: true
+    attackType: slot === "무기" ? "근접" : null, skill, enh: 0, ilv: null, unique: true, uniqPrefix: prefix
   };
 }
 function itemDisplay(item){
   return `<span class="${rarityColors[item.rarity]}">[${item.rarity}]</span> ${item.name} <span class="equip-bonus">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]} ${item.attackType==="근접"?`ATK:${item.stat[5]}`:""}${item.attackType==="원거리"?`RATK:${item.stat[6]}`:""}${item.attackType==="마법"?`MATK:${item.stat[7]}`:""}</span> ${item.skill?`<span class="equip-bonus">스킬:${item.skill}</span>`:""}${item.enh?` <span class="enh-lv">+${item.enh}</span>`:""}`;
 }
-// ---- 인벤토리, 착용/판매/일괄판매
+// 인벤토리, 착용/판매/일괄판매
 function showInv() {
   let invhtml = "";
   user.inv.forEach((item,i)=>{
@@ -346,7 +361,58 @@ function addInv(item){
   if(user.inv.length>=inventoryLimit){log("소지품이 가득 찼다!"); return false;}
   user.inv.push(item); return true;
 }
+// 창고
+function showStorage() {
+  if(!user.storage) user.storage = [];
+  let html = `<b>[창고]</b> (${user.storage.length}/100)<br>`;
+  user.storage.forEach((item,i)=>{
+    html += `<div class="equipitem">${itemDisplay(item)}
+      <button class="inv-btn" onclick="moveToInventory(${i})">인벤토리로 이동</button>
+      </div>`;
+  });
+  if(!user.storage.length) html += `<div style='color:#888'>창고에 저장된 아이템이 없습니다.</div>`;
+  html += `<hr><b>[소지품에서 창고로 이동]</b><br>`;
+  user.inv.forEach((item,i)=>{
+    html += `<div class="equipitem">${itemDisplay(item)}
+      <button class="inv-btn" onclick="moveToStorage(${i})">창고로 이동</button>
+      </div>`;
+  });
+  if(!user.inv.length) html += `<div style='color:#888'>소지품에 아이템이 없습니다.</div>`;
+  html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
+  log(html);
+}
+function moveToStorage(idx) {
+  if(user.storage.length >= 100) {
+    log("창고가 가득 찼습니다!"); return;
+  }
+  let item = user.inv[idx];
+  user.storage.push(item);
+  user.inv.splice(idx,1);
+  showStorage();
+  updateUser();
+}
+function moveToInventory(idx) {
+  if(user.inv.length >= inventoryLimit) {
+    log("소지품이 가득 찼습니다!"); return;
+  }
+  let item = user.storage[idx];
+  user.inv.push(item);
+  user.storage.splice(idx,1);
+  showStorage();
+  updateUser();
+}
+// 캐릭터창(기본/장비합산 스탯)
 function showChar() {
+  let baseStats = user.stats.slice();
+  let equipStats = user.stats.slice();
+  for (let slot of equipSlots) {
+    let eq = user.equip[slot];
+    if(eq && eq.stat){
+      for(let i=0; i<5; i++){
+        equipStats[i] += eq.stat[i]||0;
+      }
+    }
+  }
   let eqhtml = "";
   for(let slot of equipSlots){
     let eq = user.equip[slot];
@@ -358,11 +424,15 @@ function showChar() {
       eqhtml += `<div><b>${slot}:</b> <span style="color:#888">비어있음</span></div>`;
     }
   }
+  // 유일 세트 효과
+  let setBonusKey = checkUniqueSetBonus();
+  let setBonusMsg = setBonusKey ? `<br><span class="set-bonus">[${uniqueSetBonus[setBonusKey].name} 세트 효과: ${uniqueSetBonus[setBonusKey].desc}]</span>` : "";
   log(`<b>[캐릭터]</b><br>
     <b>레벨:</b> ${user.level}<br>
-    <b>스탯:</b> ${user.stats.join(" / ")}<br>
+    <b>기본 스탯:</b> <span style="color:#afe">${baseStats.join(" / ")}</span><br>
+    <b>장비 적용:</b> <span style="color:#fffa90">${equipStats.join(" / ")}</span><br>
     <b>HP:</b> ${user.hp}/${user.maxhp}<br>
-    <b>장착장비</b><br>${eqhtml}
+    <b>장착장비</b><br>${eqhtml}${setBonusMsg}
     <br><button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>
   `);
 }
@@ -372,12 +442,13 @@ function unequip(slot) {
   user.equip[slot] = undefined;
   showChar();
 }
-// ---- 마을/상점/강화
+// 마을/상점/강화
 function showTown(){
   log(`<b>[마을]</b><br>
     <button class="inv-btn" onclick="innRest()">여관(휴식)</button>
     <button class="inv-btn" onclick="showShop()">장비상점</button>
     <button class="inv-btn" onclick="showEnhance()">강화소</button>
+    <button class="inv-btn" onclick="showStorage()">창고</button>
     <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`);
 }
 function innRest(){
@@ -389,18 +460,18 @@ function innRest(){
 }
 function showShop() {
   let items = [];
-  for(let i=0;i<5;i++) items.push(makeItem());
-  let html = `<div class="shop-title">[장비 상점] (새로고침시 상품 변경)</div>`;
+  for(let i=0;i<5;i++) items.push(makeItem(false, true)); // isShop = true
+  let html = `<div class="shop-title">[장비 상점] (새로고침시 상품 변경, 에픽 등급 이상은 미출현)</div>`;
   items.forEach((item, idx)=>{
     html += `<div class="shop-item">${itemDisplay(item)}
-      <button class="inv-btn" onclick="buyShopItem(${idx})">구매 (${50+item.ilv*8}G)</button></div>`;
+      <button class="inv-btn" onclick="buyShopItem(${idx})">구매 (${50+user.level*8}G)</button></div>`;
   });
   html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
   log(html); window.shopItems = items;
 }
 function buyShopItem(idx) {
   let item = window.shopItems[idx];
-  let cost = 50 + (item.ilv ? item.ilv*8 : 8);
+  let cost = 50 + user.level*8;
   if(user.gold<cost){log("골드가 부족합니다.");return;}
   if(user.inv.length>=inventoryLimit){log("소지품이 가득 찼다!");return;}
   user.gold -= cost;
@@ -448,17 +519,21 @@ function enhanceItem(slot){
   updateUser();
   showEnhance();
 }
-// ---- 세트옵션 체크 (4부위 유일장비)
-function checkSetBonus() {
+// 세트보너스 체크(유일 전용)
+function checkUniqueSetBonus() {
   const armorSlots = ["머리", "상의", "하의", "손", "신발"];
-  let uniqueArmorCount = 0;
+  let found = { 광휘:0, 흑섬:0, 수암:0, 토암:0 };
   for(let slot of armorSlots){
     let eq = user.equip[slot];
-    if(eq && eq.rarity === "유일") uniqueArmorCount++;
+    if(eq && eq.rarity === "유일") {
+      let pre = eq.uniqPrefix || (eq.name.split("의")[0]);
+      if(found[pre] !== undefined) found[pre]++;
+    }
   }
-  return uniqueArmorCount >= 4;
+  for(let key in found) if(found[key] >= 4) return key; // 4셋 보유시 반환
+  return null;
 }
-// ---- 전투(사냥/던전/턴별로그/세트옵션/스킬)
+// 전투 (유일 세트별 효과 반영)
 function battle(type) {
   if(user.hp <= 1) {
     log("HP가 1이라 전투를 할 수 없습니다! <br>마을에서 휴식하세요.");
@@ -477,10 +552,17 @@ function battle(type) {
   ) : 2;
   myATK += user.stats[0] || 0;
   let myDEF = user.stats[3] || 0;
-  let turn = 1; let skillTurn = [], finalSkillMsg = "";
+  let turn = 1, skillTurn = [], finalSkillMsg = "", stunned = 0, rebirthUsed = false;
   const maxTurn = 10;
-  let extraAttack = checkSetBonus() ? 1 : 0; // 4셋이면 1턴 2회 공격
+  let setBonusKey = checkUniqueSetBonus();
+  let extraAttack = setBonusKey==="광휘" ? 1 : 0;
+  let stunNext = false;
   for(; turn<=maxTurn && userhp>0 && monhp>0; turn++){
+    // (흑섬 스턴, 스턴시 몬스터 행동불가)
+    if(stunned > 0) {
+      battleLog.push(`<b>[${turn}턴]</b> <span class="set-bonus">적이 스턴 상태로 행동불가!</span>`);
+      stunned--;
+    }
     let attacksThisTurn = 1 + extraAttack;
     for(let atkNum=0; atkNum<attacksThisTurn; atkNum++){
       let dmg = rint(myATK-2, myATK+3);
@@ -492,20 +574,41 @@ function battle(type) {
         skillTurn.push(turn);
         finalSkillMsg = `[스킬 발동] ${weapon.skill}로 강력한 일격!`;
       }
+      // 흑섬 세트 효과 (공격 시 30% 확률 스턴)
+      if(setBonusKey==="흑섬" && Math.random()<0.3){
+        stunned = 1;
+        skillDetail += `<span class="set-bonus">[흑섬 세트] 1턴간 스턴!</span> `;
+      }
       monhp -= dmg;
       let monsterNameDisplay = monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name;
       battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${user.name}의 공격! ${skillDetail}<span class="dmg-log">${monsterNameDisplay}에게 ${dmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
       if(monhp<=0){ break;}
     }
     if(monhp<=0) break;
+    // 몬스터 차례 (스턴, 토암 세트 부활 등 반영)
+    if(stunned > 0){
+      stunned--; continue;
+    }
     let monDmg = Math.max(1, monster.atk - rint(Math.floor(myDEF/2), myDEF+1));
     let evaded = (Math.random() < user.stats[4]/60);
     if(evaded) {
       battleLog.push(`<span class="dmg-log">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! → <b>회피!</b> (내 HP:${Math.max(userhp,0)})</span>`);
       continue;
     }
+    // 수암 세트: 40% 확률로 50% 반사
+    let reflectTxt = "";
+    if(setBonusKey==="수암" && Math.random()<0.4) {
+      let reflectDmg = Math.floor(monDmg*0.5);
+      monhp -= reflectDmg;
+      reflectTxt = ` <span class="set-bonus">[수암 세트] ${reflectDmg} 반사!</span>`;
+    }
     userhp -= monDmg;
-    battleLog.push(`${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! <span class="dmg-log">${user.name}에게 ${monDmg}의 피해</span> (내 HP:${Math.max(userhp,0)})`);
+    battleLog.push(`${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! <span class="dmg-log">${user.name}에게 ${monDmg}의 피해</span>${reflectTxt} (내 HP:${Math.max(userhp,0)})`);
+    // 토암 세트: 1회 부활
+    if(userhp<=0 && setBonusKey==="토암" && !rebirthUsed){
+      rebirthUsed = true; userhp = Math.floor(user.maxhp*0.5);
+      battleLog.push(`<span class="set-bonus">[토암 세트] 전투 중 1회 부활! HP ${userhp}로 부활</span>`);
+    }
     if(userhp<=0){ userhp=0; break;}
   }
   let win = (monhp<=0 && turn<=maxTurn);
@@ -526,7 +629,8 @@ function battle(type) {
     }
     user.exp += gain; user.gold += gold;
     user.hp = Math.max(1,userhp);
-    rewardMsg = `<br><b>승리!</b> 경험치 +${gain}, 골드 +${gold}, HP -${hpLoss}${finalSkillMsg?`<br><span class="skill-log">${finalSkillMsg}</span>`:""}${dropMsg}${stoneMsg}`;
+    let setBonusDesc = setBonusKey ? `<br><span class="set-bonus">[${uniqueSetBonus[setBonusKey].name} 세트 효과: ${uniqueSetBonus[setBonusKey].desc}]</span>` : "";
+    rewardMsg = `<br><b>승리!</b> 경험치 +${gain}, 골드 +${gold}, HP -${hpLoss}${finalSkillMsg?`<br><span class="skill-log">${finalSkillMsg}</span>`:""}${setBonusDesc}${dropMsg}${stoneMsg}`;
     levelupCheck();
   } else {
     user.hp = userhp; if(userhp<=0) user.hp=1;
@@ -555,7 +659,7 @@ function dungeonEnterUI() {
   <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">취소</button>`);
 }
 function dungeonAction(){ battle("dungeon"); }
-// ---- 레벨업 및 스탯
+// 레벨업 및 스탯
 function levelupCheck(){
   while(user.exp>=expNeed(user.level) && user.level<999){
     user.exp -= expNeed(user.level);
@@ -569,6 +673,20 @@ function levelupCheck(){
 function statRandAdd(stats){
   let idx = rint(0,stats.length-1);
   stats[idx]++;
+}
+// 환생: 장비 착용/창고만 유지, 소지품 초기화
+function rebirth(){
+  if(user.level<999){log("레벨 999 달성 시에만 환생 가능!<br><button class='inv-btn' onclick='showTown()'>돌아가기</button>");return;}
+  if(!confirm("환생 시 레벨/스탯/소지품/골드가 초기화됩니다. 착용장비와 창고는 유지됩니다. 진행할까요?")) return;
+  let keepEquip = {};
+  for(let slot of equipSlots) if(user.equip[slot]) keepEquip[slot] = user.equip[slot];
+  let keepStorage = user.storage||[];
+  user.level=1; user.exp=0; user.gold=100;
+  user.stats=user.stats.map(x=>1+user.rebirth*10);
+  user.statmax=9999; user.rebirth+=1; user.hp=30; user.maxhp=30;
+  user.equip=keepEquip; user.inv=[]; user.stones=0; user.storage = keepStorage;
+  log("환생 완료! 기본 능력치 +10이 부여되었습니다.<br><button class='inv-btn' onclick='showTown()'>돌아가기</button>");
+  updateUser();
 }
 </script>
 </body>
