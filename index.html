@@ -556,10 +556,7 @@ function checkUniqueSetBonus() {
 }
 // 전투 (유일 세트별 효과 반영)
 function battle(type) {
-  if(user.hp <= 1) {
-    log("HP가 1이라 전투를 할 수 없습니다! <br>마을에서 휴식하세요.");
-    updateUser(); return;
-  }
+  if(user.hp <= 1) { log("HP가 1이라 전투를 할 수 없습니다! <br>마을에서 휴식하세요."); updateUser(); return; }
   let isDungeon = (type === "dungeon");
   let monster = makeMonster(user.level, isDungeon);
   let userhp = user.hp;
@@ -576,59 +573,91 @@ function battle(type) {
   let turn = 1, skillTurn = [], finalSkillMsg = "", stunned = 0, rebirthUsed = false;
   const maxTurn = 10;
   let setBonusKey = checkUniqueSetBonus();
-  let extraAttack = setBonusKey==="광휘" ? 1 : 0;
-  let stunNext = false;
+  let hasGwanghui = setBonusKey === "광휘";
   for(; turn<=maxTurn && userhp>0 && monhp>0; turn++){
-    // (흑섬 스턴, 스턴시 몬스터 행동불가)
+    // INT(지력): 턴 시작 시 20% 회복 확률
+    let intChance = Math.min(user.stats[2]/9999 * 0.7, 0.7);
+    if(Math.random() < intChance) {
+      let heal = Math.floor(user.maxhp * 0.2);
+      userhp = Math.min(user.maxhp, userhp + heal);
+      battleLog.push(`<b>[${turn}턴]</b> <span class="skill-log">✨ [마력 효과] HP ${heal} 회복!</span> (내 HP:${userhp})`);
+    }
+
     if(stunned > 0) {
-      battleLog.push(`<b>[${turn}턴]</b> <span class="set-bonus">적이 스턴 상태로 행동불가!</span>`);
+      battleLog.push(`<b>[${turn}턴]</b> <span class="set-bonus">⏳ [흑섬 세트] 적이 스턴 상태로 행동불가!</span>`);
       stunned--;
     }
-    let attacksThisTurn = 1 + extraAttack;
+
+    // 턴 당 공격 횟수 계산
+    let attacksThisTurn = 1; // 기본 1회
+    let attackEffectTag = []; // 각 공격별 효과 표시용
+    // 광휘 세트 효과: 반드시 1회 추가타 (항상 발동)
+    if(hasGwanghui) {
+      attacksThisTurn += 1;
+      attackEffectTag.push("광휘 세트");
+    }
+    // 민첩(DEX): 별도 확률로 1회 추가 공격 (한 턴 최대 1회, 광휘와 별개로)
+    let dexChance = Math.min(user.stats[1]/9999 * 0.7, 0.7);
+    let dexExtra = (Math.random() < dexChance) ? 1 : 0;
+    if(dexExtra) {
+      attacksThisTurn += 1;
+      attackEffectTag.push("민첩 추가타");
+    }
+    // 공격 루프
     for(let atkNum=0; atkNum<attacksThisTurn; atkNum++){
+      // 각 공격이 어떤 효과(세트, 민첩 등)인지 체크
+      let effects = [];
+      if(hasGwanghui && atkNum === 1) effects.push(`<span class="set-bonus">🌟 [광휘 세트 추가타]</span>`);
+      if(dexExtra && atkNum === (hasGwanghui?2:1)) effects.push(`<span class="skill-log">⚡ [민첩 추가타]</span>`);
+      // STR(힘): 강공격 확률(피해 2배)
+      let strChance = Math.min(user.stats[0]/9999 * 0.7, 0.7);
       let dmg = rint(myATK-2, myATK+3);
+      let isStrong = (Math.random() < strChance);
+      if(isStrong) {
+        dmg = dmg*2;
+        effects.push(`<span class="skill-log">💥 [힘: 강공격]</span>`);
+      }
+      // 무기 스킬 발동
       let isSkill = weapon && weapon.skill && Math.random() < (weapon.skillTrigger||0);
-      let skillDetail = "";
       if(isSkill){
         dmg = Math.floor(dmg*1.8) + rint(1,5);
-        skillDetail = `<span class="skill-log">[스킬 발동] ${weapon.skill}!</span> `;
+        effects.push(`<span class="skill-log">🔥 [무기스킬 발동: ${weapon.skill}]</span>`);
         skillTurn.push(turn);
         finalSkillMsg = `[스킬 발동] ${weapon.skill}로 강력한 일격!`;
       }
-      // 흑섬 세트 효과 (공격 시 30% 확률 스턴)
+      // 흑섬 세트(30% 확률 스턴)
       if(setBonusKey==="흑섬" && Math.random()<0.3){
         stunned = 1;
-        skillDetail += `<span class="set-bonus">[흑섬 세트] 1턴간 스턴!</span> `;
+        effects.push(`<span class="set-bonus">⏳ [흑섬 세트: 스턴!]</span>`);
       }
       monhp -= dmg;
       let monsterNameDisplay = monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name;
-      battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${user.name}의 공격! ${skillDetail}<span class="dmg-log">${monsterNameDisplay}에게 ${dmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
+      battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${effects.join(" ")}<span style="font-weight:bold;">${user.name}의 공격!</span> <span class="dmg-log">${monsterNameDisplay}에게 ${dmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
       if(monhp<=0){ break;}
     }
     if(monhp<=0) break;
-    // 몬스터 차례 (스턴, 토암 세트 부활 등 반영)
-    if(stunned > 0){
-      stunned--; continue;
-    }
+    if(stunned > 0){ stunned--; continue; }
+    // LUK(운): 회피 확률(최대 70%)
+    let evadeChance = Math.min(user.stats[4]/9999 * 0.7, 0.7);
     let monDmg = Math.max(1, monster.atk - rint(Math.floor(myDEF/2), myDEF+1));
-    let evaded = (Math.random() < user.stats[4]/60);
+    let evaded = (Math.random() < evadeChance);
     if(evaded) {
-      battleLog.push(`<span class="dmg-log">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! → <b>회피!</b> (내 HP:${Math.max(userhp,0)})</span>`);
+      battleLog.push(`<span class="dmg-log">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! → <b>🌀 [운: 회피!]</b> (내 HP:${Math.max(userhp,0)})</span>`);
       continue;
     }
-    // 수암 세트: 40% 확률로 50% 반사
+    // 수암 세트(40% 반사)
     let reflectTxt = "";
     if(setBonusKey==="수암" && Math.random()<0.4) {
       let reflectDmg = Math.floor(monDmg*0.5);
       monhp -= reflectDmg;
-      reflectTxt = ` <span class="set-bonus">[수암 세트] ${reflectDmg} 반사!</span>`;
+      reflectTxt = ` <span class="set-bonus">💫 [수암 세트: ${reflectDmg} 반사!]</span>`;
     }
     userhp -= monDmg;
     battleLog.push(`${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! <span class="dmg-log">${user.name}에게 ${monDmg}의 피해</span>${reflectTxt} (내 HP:${Math.max(userhp,0)})`);
-    // 토암 세트: 1회 부활
+    // 토암 세트(1회 부활)
     if(userhp<=0 && setBonusKey==="토암" && !rebirthUsed){
       rebirthUsed = true; userhp = Math.floor(user.maxhp*0.5);
-      battleLog.push(`<span class="set-bonus">[토암 세트] 전투 중 1회 부활! HP ${userhp}로 부활</span>`);
+      battleLog.push(`<span class="set-bonus">🪨 [토암 세트: 1회 부활! HP ${userhp}로 부활]</span>`);
     }
     if(userhp<=0){ userhp=0; break;}
   }
