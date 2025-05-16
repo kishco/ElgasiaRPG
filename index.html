@@ -405,14 +405,27 @@ function moveToInventory(idx) {
 function showChar() {
   let baseStats = user.stats.slice();
   let equipStats = user.stats.slice();
+  let addATK = 0, addRATK = 0, addMATK = 0, addDEF = 0;
   for (let slot of equipSlots) {
     let eq = user.equip[slot];
     if(eq && eq.stat){
       for(let i=0; i<5; i++){
         equipStats[i] += eq.stat[i]||0;
       }
+      addATK += eq.stat[5]||0;
+      addRATK += eq.stat[6]||0;
+      addMATK += eq.stat[7]||0;
+      addDEF += eq.stat[3]||0;
     }
   }
+  // 실제 전투에 쓰는 공격력: 장비+스탯(STR)
+  let totalATK = addATK + equipStats[0]; // 근접
+  let totalRATK = addRATK + equipStats[1]; // 원거리
+  let totalMATK = addMATK + equipStats[2]; // 마법
+  let totalDEF = equipStats[3];
+  let statLabel = ["STR(근력)","DEX(민첩)","INT(지능)","VIT(체력)","LUK(운)"];
+  let baseStr = baseStats.map((v,i)=>`${statLabel[i]}: ${v}`).join(" / ");
+  let equipStr = equipStats.map((v,i)=>`${statLabel[i]}: ${v}`).join(" / ");
   let eqhtml = "";
   for(let slot of equipSlots){
     let eq = user.equip[slot];
@@ -429,13 +442,16 @@ function showChar() {
   let setBonusMsg = setBonusKey ? `<br><span class="set-bonus">[${uniqueSetBonus[setBonusKey].name} 세트 효과: ${uniqueSetBonus[setBonusKey].desc}]</span>` : "";
   log(`<b>[캐릭터]</b><br>
     <b>레벨:</b> ${user.level}<br>
-    <b>기본 스탯:</b> <span style="color:#afe">${baseStats.join(" / ")}</span><br>
-    <b>장비 적용:</b> <span style="color:#fffa90">${equipStats.join(" / ")}</span><br>
+    <b>기본 스탯:</b> ${baseStr}<br>
+    <b>장비 적용:</b> ${equipStr}<br>
+    <b>[공격/방어]</b><br>
+    ATK(근접): <b>${totalATK}</b> / RATK(원거리): <b>${totalRATK}</b> / MATK(마법): <b>${totalMATK}</b> / DEF: <b>${totalDEF}</b><br>
     <b>HP:</b> ${user.hp}/${user.maxhp}<br>
     <b>장착장비</b><br>${eqhtml}${setBonusMsg}
     <br><button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>
   `);
 }
+
 function unequip(slot) {
   if (!user.equip[slot]) return;
   addInv(user.equip[slot]);
