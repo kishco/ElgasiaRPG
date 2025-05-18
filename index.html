@@ -919,7 +919,14 @@ function battle(type) {
   log(`[${isDungeon?'던전':'사냥'}] <span class="monname">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}</span>과의 턴제 전투 (최대 10턴)<br>` + battleLog.join("<br>") + rewardMsg);
   updateUser();
 }
-function action(type){ battle(type); }
+function action(type){
+  // HP가 1일 때는 사냥, 던전 모두 입장/실행 불가
+  if(user.hp <= 1){
+    log("<span class='dead-log'>HP가 1일 때는 전투를 할 수 없습니다! 여관에서 회복하세요.</span>");
+    return;
+  }
+  battle(type);
+}
 function dungeonEnterUI() {
   log(`<b>[던전 입장]</b><br>
   <span style="color:#ffd700;">던전에서 죽으면 확률적으로 장비를 잃을 수 있습니다.</span><br><br>
