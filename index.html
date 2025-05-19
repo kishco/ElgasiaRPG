@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Elgasia - Text RPG ver1.015</title>
+  <title>Elgasia - Text RPG ver1.06</title>
   <style>
     body { font-family: 'Malgun Gothic', sans-serif; background: #232236; color: #fff; margin: 0; padding: 0;}
     #main { max-width: 900px; margin: 40px auto; background: #181828; padding: 30px; border-radius: 20px; box-shadow: 0 0 30px #0008;}
@@ -807,12 +807,23 @@ function unequip(slot) {
   user.equip[slot] = undefined;
   showChar();
 }
+
+function showGacha() {
+  let html = `<b>[가챠 상점]</b><br>
+  <span style="color:#ffe161">골드로 무작위 보상을 뽑을 수 있습니다!</span><br>
+  <button class="inv-btn" onclick="gachaRoll(1)">1회 뽑기 (2,000G)</button>
+  <button class="inv-btn" onclick="gachaRoll(10)">10회 뽑기 (18,000G, 10% 할인)</button>
+  <br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
+  log(html);
+}
+
 // 마을/상점/강화
 function showTown(){
   log(`<b>[마을]</b><br>
     <button class="inv-btn" onclick="innRest()">여관(휴식)</button>
     <button class="inv-btn" onclick="showShop()">장비상점</button>
     <button class="inv-btn" onclick="showEnhance()">강화소</button>
+    <button class="inv-btn" onclick="showGacha()">가챠상점</button>
     <button class="inv-btn" onclick="showStorage()">창고</button>
     <button class="inv-btn" onclick="rebirth()">환생</button>
     <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`);
@@ -857,6 +868,49 @@ function showEnhance(){
   }
   html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
   log(html);
+}
+function gachaRoll(count) {
+  let cost = (count === 10) ? 18000 : 2000;
+  if(user.gold < cost) {
+    log("골드가 부족합니다!"); return;
+  }
+  user.gold -= cost;
+  let results = [];
+  for(let i=0; i<count; i++) {
+    let r = Math.random() * 100;
+    if(r < 0.001) { // 유일(신화) 0.001%
+      let item = makeItem(true, false);
+      item.rarity = "유일";
+      results.push(`🟣 ${itemDisplay(item)}`); addInv(item);
+    } else if(r < 0.201) { // 레전더리 0.2%
+      let item = makeItem(false, false);
+      item.rarity = "레전더리";
+      results.push(`🟡 ${itemDisplay(item)}`); addInv(item);
+    } else if(r < 2.201) { // 에픽 2%
+      let item = makeItem(false, false);
+      item.rarity = "에픽";
+      results.push(`🟠 ${itemDisplay(item)}`); addInv(item);
+    } else if(r < 9.201) { // 유니크 7%
+      let item = makeItem(false, false);
+      item.rarity = "유니크";
+      results.push(`🔵 ${itemDisplay(item)}`); addInv(item);
+    } else if(r < 34.201) { // 강화석 1~10개 25%
+      let stone = rint(1, 10);
+      user.stones = (user.stones||0) + stone;
+      results.push(`<span style="color:#77e">💎 강화석 ${stone}개 획득!</span>`);
+    } else if(r < 49.201) { // 골드 환급 15%
+      let gold = rint(150, 300);
+      user.gold += gold;
+      results.push(`<span style="color:#ffe161">💰 보너스 골드 ${gold} 획득!</span>`);
+    } else { // 나머지 55.799% 일반~유니크
+      let item = makeItem(false, false);
+      results.push(`⚪️ ${itemDisplay(item)}`); addInv(item);
+    }
+  }
+  log(`<b>[가챠 결과]</b><br>${results.join("<br>")}<br>
+    <button class="inv-btn" onclick="showGacha()">가챠 상점으로</button>
+    <button class="inv-btn" onclick="showTown()">마을로</button>`);
+  updateUser();
 }
 function enhanceItem(slot){
   let eq = user.equip[slot];
@@ -1189,10 +1243,11 @@ let monsterDmg = { val: monsterDmgVal };
       let item = makeItem(isDungeon, false, monster.unique ? monster.name : null);
       if (addInv(item)) dropMsg = `<br>아이템 획득! ${itemDisplay(item)}`;
     }
-    if(Math.random()<(isDungeon?0.15:0.10)){
-      user.stones=(user.stones||0)+1;
-      stoneMsg=`<br><span style="color:#77e;">강화석 1개를 획득했다!</span>`;
-    }
+if (Math.random() < (isDungeon ? 0.15 : 0.10)) {
+  let stonesDrop = rint(1, 10);
+  user.stones = (user.stones || 0) + stonesDrop;
+  stoneMsg = `<br><span style="color:#77e;">강화석 ${stonesDrop}개를 획득했다!</span>`;
+}
     user.exp += gain; user.gold += gold;
     user.hp = Math.max(1,userhp.val);
     let setBonusDesc = setBonusKey ? `<br><span class="set-bonus">[${uniqueSetBonus[setBonusKey].name} 세트 효과: ${uniqueSetBonus[setBonusKey].desc}]</span>` : "";
