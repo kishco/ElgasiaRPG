@@ -995,21 +995,43 @@ function triggerArmorSkills(timing, opts) {
   return anyTriggered;
 }
 
-// --- 전투 메인 함수 ---
+// --- 전투 메인 함수 (수정 완성본) ---
 function battle(type) {
   let isDungeon = (type === "dungeon");
   let monster = makeMonster(user.level, isDungeon);
   let userhp = { val: user.hp };
   let monhp = monster.hp + (isDungeon ? rint(5,18) : 0);
   let battleLog = [];
+
+  // [수정] --- 장비+스탯 합산 공식 (스탯창과 동일하게)
+  let baseStats = user.stats.slice();
+  let equipStats = user.stats.slice();
+  let addATK = 0, addRATK = 0, addMATK = 0, addDEF = 0;
+  for (let slot of equipSlots) {
+    let eq = user.equip[slot];
+    if(eq && eq.stat){
+      for(let i=0; i<5; i++){
+        equipStats[i] += eq.stat[i]||0;
+      }
+      addATK += eq.stat[5]||0;
+      addRATK += eq.stat[6]||0;
+      addMATK += eq.stat[7]||0;
+      addDEF += eq.stat[3]||0;
+    }
+  }
+  let totalATK   = addATK + equipStats[0];
+  let totalRATK  = addRATK + equipStats[1];
+  let totalMATK  = addMATK + equipStats[2];
+  let totalDEF   = equipStats[3];
+
   let weapon = user.equip["무기"];
-  let myATK = weapon ? (
-    (weapon.attackType=="근접") ? (weapon.stat[5]||4) :
-    (weapon.attackType=="원거리") ? (weapon.stat[6]||3) :
-    (weapon.attackType=="마법") ? (weapon.stat[7]||3) : 2
-  ) : 2;
-  myATK += user.stats[0] || 0;
-  let myDEF = user.stats[3] || 0;
+  let myATK = totalATK;
+  if (weapon) {
+    if (weapon.attackType == "원거리") myATK = totalRATK;
+    else if (weapon.attackType == "마법") myATK = totalMATK;
+  }
+  let myDEF = totalDEF;
+
   let setBonusKey = checkUniqueSetBonus();
   let hasGwanghui = setBonusKey === "광휘";
   let rebirthUsed = false;
@@ -1017,11 +1039,10 @@ function battle(type) {
   let shieldObj = { reducePct:0, reflectPct:0, evadeAdd:0, shield:0, skillRed:0 };
   let skillTurn = [], finalSkillMsg = "";
 
-  let turn; // turn을 바깥에 선언!
+  let turn;
   for(turn=1; turn<=maxTurn && userhp.val>0 && monhp>0; turn++) {
-    // [1] 턴 시작: 회복/실드/지속형 효과
+    // 턴 시작 효과
     triggerArmorSkills('turn', {battleLog, userhp, monhp, shieldObj});
-    // INT(지력): 턴 시작 회복 (healup 영향)
     let intChance = Math.min(user.stats[2]/9999 * 0.7, 0.7);
     if(Math.random() < intChance) {
       let heal = Math.floor(user.maxhp * 0.2);
@@ -1029,30 +1050,33 @@ function battle(type) {
       battleLog.push(`<b>[${turn}턴]</b> <span class="skill-log">✨ [마력 효과] HP ${heal} 회복!</span> (내 HP:${userhp.val})`);
     }
 
-    // [2] 스턴(흑섬) 효과
+    // 스턴 처리
     if(user.stunned && user.stunned > 0) {
       battleLog.push(`<b>[${turn}턴]</b> <span class="set-bonus">⏳ [흑섬 세트] 적이 스턴 상태로 행동불가!</span>`);
       user.stunned--;
     }
 
-    // [3] 턴당 공격 횟수 결정
+    // 공격 횟수
     let attacksThisTurn = 1;
     if(hasGwanghui) attacksThisTurn += 1;
     let dexChance = Math.min(user.stats[1]/9999 * 0.7, 0.7);
     let dexExtra = (Math.random() < dexChance) ? 1 : 0;
     if(dexExtra) attacksThisTurn += 1;
 
-    // [4] 공격 루프
+    // [공격 루프]
     for(let atkNum=0; atkNum<attacksThisTurn; atkNum++) {
       let effects = [];
-      let dmg = rint(myATK-2, myATK+3);
+    let dmg = rint(myATK-2, myATK+3);
+// 몬스터 방어력 적용
+    dmg = Math.floor(dmg * 100 / (100 + monster.def));
+    if (dmg < 1) dmg = 1;
       let isStrong = (Math.random() < Math.min(user.stats[0]/9999 * 0.7, 0.7));
       if(isStrong) {
         dmg = dmg * 2;
         effects.push(`<span class="skill-log">💥 [힘: 강공격]</span>`);
       }
 
-      // 무기스킬 확률 발동
+      // 무기스킬
       let isSkill = weapon && weapon.skill && Math.random() < (weapon.skillTrigger||0);
       if(isSkill) {
         dmg = Math.floor(dmg*1.8) + rint(1,5);
@@ -1061,84 +1085,78 @@ function battle(type) {
         effects.push(`<span class="skill-log">🔥 [무기스킬: ${weapon.skill}]</span>`);
       }
 
-      // 방어구 스킬: leech/skillheal (확률발동)
+      // 방어구 스킬(흡혈 등)
       triggerArmorSkills('attack', {
         attackDmg: dmg, skillAttack: isSkill, battleLog, userhp, monhp, shieldObj
       });
 
-      // 흑섬 세트(30% 확률 스턴)
+      // 흑섬(스턴)
       if(setBonusKey==="흑섬" && Math.random()<0.3){
         user.stunned = 1;
         effects.push(`<span class="set-bonus">⏳ [흑섬 세트: 스턴!]</span>`);
       }
 
       let monsterNameDisplay = monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name;
-      monhp -= dmg;
+let finalDmg = Math.floor(dmg * 100 / (100 + (monster.def||0)));
+if (finalDmg < 1) finalDmg = 1;
+monhp -= finalDmg;
       if(monhp < 0) monhp = 0;
-      battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${effects.join(" ")}<span style="font-weight:bold;">${user.name}의 공격!</span> <span class="dmg-log">${monsterNameDisplay}에게 ${dmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
+battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${effects.join(" ")}<span style="font-weight:bold;">${user.name}의 공격!</span> <span class="dmg-log">${monsterNameDisplay}에게 ${finalDmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
       if(monhp <= 0) break;
     }
     if(monhp <= 0) break;
     if(user.stunned && user.stunned > 0) { user.stunned--; continue; }
 
-    // [5] 몬스터 공격 및 방어구 스킬 방어계열 적용
-    let monsterDmg = { val: Math.max(1, monster.atk - rint(Math.floor(myDEF/2), myDEF+1)) };
+    // 몬스터 공격
+   let monsterRawDmg = monster.atk;
+let monsterDmgVal = Math.floor(monsterRawDmg * 100 / (100 + myDEF));
+if (monsterDmgVal < 1) monsterDmgVal = 1;
+let monsterDmg = { val: monsterDmgVal };
     triggerArmorSkills('defend', {
-      battleLog, userhp, monhp, shieldObj, isSkillHit: false // 필요시 구현
+      battleLog, userhp, monhp, shieldObj, isSkillHit: false
     });
 
-    // 실드 적용
     if (shieldObj.shield > 0) {
       let absorb = Math.min(shieldObj.shield, monsterDmg.val);
       shieldObj.shield -= absorb;
       monsterDmg.val -= absorb;
       battleLog.push(`<span style="color:#e3ffd8;font-weight:bold;">🛡️ [실드] 피해 ${absorb} 흡수 (잔여 ${shieldObj.shield})</span>`);
     }
-    // 반사
     if (shieldObj.reflectPct > 0) {
       let reflect = Math.floor(monsterDmg.val * (shieldObj.reflectPct / 100));
       monhp -= reflect;
       battleLog.push(`<span style="color:#8ef6f2">🪞 [반사] ${reflect} 반사</span>`);
     }
-    // 피해감소
     if (shieldObj.reducePct > 0) {
       monsterDmg.val = Math.max(1, Math.floor(monsterDmg.val * (1-shieldObj.reducePct/100)));
     }
-    // 스킬피해감소
     if (shieldObj.skillRed > 0) {
       monsterDmg.val = Math.max(1, Math.floor(monsterDmg.val * (1-shieldObj.skillRed/100)));
     }
-    // 회피 확률 (LUK + 방어구 효과)
     let evadeChance = Math.min(user.stats[4]/9999 * 0.7, 0.7) + (shieldObj.evadeAdd/100);
     if(Math.random() < evadeChance) {
       battleLog.push(`<span class="dmg-log">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! → <b>🌀 [회피!]</b> (내 HP:${Math.max(userhp.val,0)})</span>`);
       continue;
     }
-    // ignorehit
     let gotHit = true;
     triggerArmorSkills('gotHit', {battleLog, userhp, monhp, shieldObj, gotHit, monsterDmg});
-    if(monsterDmg.val <= 0) continue; // 피격 무시 성공
+    if(monsterDmg.val <= 0) continue;
 
-    // 데미지 실제 적용
     userhp.val -= monsterDmg.val;
     battleLog.push(`${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! <span class="dmg-log">${user.name}에게 ${monsterDmg.val} 피해</span> (내 HP:${Math.max(userhp.val,0)})`);
 
-    // deathproof
     triggerArmorSkills('death', {battleLog, userhp, monhp, shieldObj});
 
-    // 토암 세트 부활
     if(userhp.val<=0 && setBonusKey==="토암" && !rebirthUsed){
       rebirthUsed = true; userhp.val = Math.floor(user.maxhp*0.5);
       battleLog.push(`<span class="set-bonus">🪨 [토암 세트: 1회 부활! HP ${userhp.val}로 부활]</span>`);
     }
-
     if(userhp.val <= 0) { userhp.val = 0; break; }
-    // 효과 변수 리셋 (실드는 누적)
     shieldObj = { reducePct:0, reflectPct:0, evadeAdd:0, shield:shieldObj.shield, skillRed:0 };
   }
-  turn--; // 마지막 턴값 보정
+  turn--;
 
-  // 플래그 초기화(중요!)
+  // 플래그 초기화
   for (let slot of equipSlots) {
     let eq = user.equip[slot];
     if(eq) {
@@ -1147,7 +1165,7 @@ function battle(type) {
     }
   }
 
-  // [6] 결과 및 보상
+  // 보상 및 결과 처리 (이 부분 동일)
   let win = (monhp<=0 && turn<=maxTurn);
   if(turn>maxTurn) win = false;
   let baseExp = isDungeon ? Math.floor(user.level*4)+rint(16,32) : Math.floor(user.level*1.7)+rint(6,16);
