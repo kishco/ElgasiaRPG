@@ -551,7 +551,7 @@ function rarityBonus(r){
   return 0;
 }
 // ---- 아이템 생성 (스킬 확률 및 유일 세트/스킬)
-function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
+function makeItem(allowMyth, isShop, uniqueMonsterName = null, rarityOverride = null) {
   let rate = allowMyth ? dungeonRate : rarityRate;
   let localRarityOrder = isShop ? ["일반","레어","유니크"] : rarityOrder;
   let localRate = isShop ? [70,25,5] : rate;
@@ -560,7 +560,7 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   for (let i=0;i<localRate.length;i++) { acc += localRate[i]; if (r < acc) { rarity = localRarityOrder[i]; break; } }
   if(!uniqueMonsterName && rarity === "유일") rarity = "레전더리";
   if(uniqueMonsterName) rarity = "유일";
-
+  if (rarityOverride) rarity = rarityOverride;
   let slot = equipSlots[rint(0, equipSlots.length-1)];
   let pool = slotTypePool[slot];
   let baseObj = pool[rint(0, pool.length-1)];
@@ -878,32 +878,29 @@ function gachaRoll(count) {
   let results = [];
   for(let i=0; i<count; i++) {
     let r = Math.random() * 100;
-    if(r < 0.001) { // 유일(신화) 0.001%
-      let item = makeItem(true, false);
-      item.rarity = "유일";
+    let item;
+    if(r < 0.001) { // 유일(신화)
+      item = makeItem(true, false, null, "유일");
       results.push(`🟣 ${itemDisplay(item)}`); addInv(item);
-    } else if(r < 0.201) { // 레전더리 0.2%
-      let item = makeItem(false, false);
-      item.rarity = "레전더리";
+    } else if(r < 0.201) { // 레전더리
+      item = makeItem(false, false, null, "레전더리");
       results.push(`🟡 ${itemDisplay(item)}`); addInv(item);
-    } else if(r < 2.201) { // 에픽 2%
-      let item = makeItem(false, false);
-      item.rarity = "에픽";
+    } else if(r < 2.201) { // 에픽
+      item = makeItem(false, false, null, "에픽");
       results.push(`🟠 ${itemDisplay(item)}`); addInv(item);
-    } else if(r < 9.201) { // 유니크 7%
-      let item = makeItem(false, false);
-      item.rarity = "유니크";
+    } else if(r < 9.201) { // 유니크
+      item = makeItem(false, false, null, "유니크");
       results.push(`🔵 ${itemDisplay(item)}`); addInv(item);
-    } else if(r < 34.201) { // 강화석 1~10개 25%
+    } else if(r < 34.201) { // 강화석
       let stone = rint(1, 10);
       user.stones = (user.stones||0) + stone;
       results.push(`<span style="color:#77e">💎 강화석 ${stone}개 획득!</span>`);
-    } else if(r < 49.201) { // 골드 환급 15%
+    } else if(r < 49.201) { // 골드 환급
       let gold = rint(150, 300);
       user.gold += gold;
       results.push(`<span style="color:#ffe161">💰 보너스 골드 ${gold} 획득!</span>`);
-    } else { // 나머지 55.799% 일반~유니크
-      let item = makeItem(false, false);
+    } else { // 나머지: 일반~유니크
+      item = makeItem(false, false);
       results.push(`⚪️ ${itemDisplay(item)}`); addInv(item);
     }
   }
