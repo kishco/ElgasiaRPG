@@ -868,6 +868,9 @@ filteredInv.forEach(item=>{
 function equipItem(idx){
   let item = user.inv[idx];
   if(!item || !item.slot || equipSlots.indexOf(item.slot) === -1) return;
+  // 부위 확인: 같은 부위에만 장착 가능!
+  // 이미 장착 중인 다른 부위에 착용 시도 방지
+  // (slot이 정확히 일치하는 경우에만 허용)
   if(user.equip[item.slot]) addInv(user.equip[item.slot]);
   user.equip[item.slot]=item;
   user.inv.splice(idx,1);
