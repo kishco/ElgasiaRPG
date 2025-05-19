@@ -447,6 +447,8 @@ function hideLoad(){ log('이전 화면으로 돌아감'); }
 function startGame(slot) {
   saveSlot = slot;
   let data = localStorage.getItem("elgasia_save_"+slot);
+  document.getElementById("loadslotbox").style.display = "none";
+  document.getElementById("mainwrap").style.display = "";
   if (data) {
     user = JSON.parse(data); if(!user.storage) user.storage=[];
     document.getElementById("loadslotbox").style.display = "none";
@@ -459,6 +461,7 @@ function startGame(slot) {
       stats: [1,1,1,1,1], statmax: 9999, hp: 30, maxhp: 30,
       equip: {}, inv: [], town: {restcount:0,skillstone:1}, stones: 0, storage: []
     };
+    document.getElementById("mainwrap").style.display = "";
     showUI(); updateUser();
     log(`<b>환영합니다! 캐릭터 이름을 먼저 정해주세요.</b> <br><div class="namebox"><input type="text" id="newname" maxlength="10" placeholder="캐릭터 이름"/><button class="inv-btn" onclick="setCharName()">확인</button></div>`);
   }
