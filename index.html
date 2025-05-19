@@ -35,28 +35,258 @@
     .dmg-log { color:#fba; }
     .dead-log { color:#fa4247; font-weight:bold; }
     .unique-monster { color:#ff5555; font-weight:bold; }
-    .set-bonus { color: #ffe161; font-weight: bold;}
-  </style>
+     .set-bonus { color: #ffe161; font-weight: bold;}
+
+  /* --- 여기부터 덧붙여라 --- */
+ #mainwrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+#centerwrap {
+  flex: 1.7;
+  min-width: 480px;
+  max-width: 900px;
+  min-height: 300px;
+  max-height: 700px;
+  overflow-y: auto;
+  background: #23223a;
+  border-radius: 30px 0 0 30px;
+  margin: 55px 0 55px 0;
+  padding: 35px 40px 32px 45px;
+  box-shadow: 0 4px 36px #10101965, 0 2px 18px #0008;
+  display: flex;
+  flex-direction: column;
+}
+
+#userinfo {
+  margin-bottom: 24px;
+  font-size: 18px;
+  letter-spacing: 0.3px;
+}
+
+.log {
+  border: 1.5px solid #2d2e43;
+  background: #1c1c2f;
+  border-radius: 18px;
+  min-height: 110px;
+  padding: 18px 22px;
+  font-size: 17px;
+  color: #f6f7ff;
+  box-shadow: 0 1.5px 8px #0002;
+  margin-bottom: 0;
+}
+
+#sidebar {
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: linear-gradient(140deg, #262655 70%, #353565 100%);
+  border-radius: 0 30px 30px 0;
+  margin: 55px 0 55px 0;
+  padding: 40px 26px 34px 16px;
+  min-height: 520px;
+  min-width: 200px;
+  box-shadow: 0 4px 36px #19193380;
+}
+
+.btn-bar, .save-bar {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
+
+.btn-bar button, .save-bar button {
+  width: 100%;
+  margin-bottom: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #4252be 70%, #6e89ec 100%);
+  border: none;
+  color: #fff;
+  padding: 13px 0;
+  letter-spacing: 1.2px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #233;
+  transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+}
+.btn-bar button:disabled, .save-bar button:disabled {
+  background: #333a;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.btn-bar button:hover:not(:disabled), .save-bar button:hover:not(:disabled) {
+  background: linear-gradient(90deg, #5162e0 70%, #9ab5ff 100%);
+  transform: translateY(-2px) scale(1.035);
+  box-shadow: 0 4px 18px #4456cc44;
+}
+
+.save-bar {
+  margin-top: 25px;
+  font-size: 15px;
+  color: #cacde8;
+  align-items: flex-start;
+}
+.save-bar span {
+  margin-left: 8px;
+  color: #c6c8dd;
+}
+
+.stat-box {
+  margin: 6px 0 22px 0;
+  font-size: 18.5px;
+}
+.stat-box span {
+  display: inline-block;
+  margin-right: 22px;
+  color: #f8f8fb;
+  font-size: 18px;
+}
+.stat-box b {
+  color: #ffe161;
+  font-weight: 700;
+}
+.inv-btn {
+  margin-left: 8px;
+  background: #4751a8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 3px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background 0.18s;
+}
+.inv-btn:hover { background: #697af3; }
+.inv-btn:disabled { color: #888; }
+
+.set-bonus {
+  color: #ffe161;
+  font-weight: bold;
+  letter-spacing: 0.8px;
+}
+
+/* 전체적으로 폰트 조금 부드럽게 */
+body, input, button {
+  font-family: 'Malgun Gothic', 'Noto Sans KR', 'Pretendard', sans-serif;
+  letter-spacing: 0.08em;
+}
+#loadslotbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 96vh;
+  width: 100vw;
+  position: absolute;
+  top: 0; left: 0;
+  background: none;
+  z-index: 10;
+}
+.save-slot-select {
+  background: #23223a;
+  border-radius: 30px;
+  box-shadow: 0 6px 36px #18183360, 0 2px 12px #0008;
+  padding: 48px 64px 38px 64px;
+  margin-top: 40px;
+  font-size: 24px;
+  color: #fff;
+  min-width: 350px;
+}
+.save-slot-btn {
+  font-size: 23px !important;
+  padding: 22px 44px !important;
+  border-radius: 13px !important;
+  background: #384085 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  margin-right: 15px !important;
+  margin-bottom: 16px !important;
+  box-shadow: 0 2px 14px #2334;
+  border: none !important;
+  cursor: pointer;
+  transition: background 0.14s, transform 0.12s;
+}
+.save-slot-btn:hover {
+  background: #5662d1 !important;
+  transform: translateY(-2px) scale(1.025);
+}
+.save-del-btn {
+  background: #ba4545 !important;
+  color: #fff !important;
+  border-radius: 9px !important;
+  font-size: 16px !important;
+  padding: 8px 20px !important;
+  margin-bottom: 16px !important;
+  margin-left: 0px !important;
+  border: none !important;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.save-del-btn:hover {
+  background: #e65a5a !important;
+#equipstatbox {
+  margin-bottom: 18px;
+  margin-top: -5px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+.equipstat-flex {
+  display: flex;
+  flex-direction: column;  /* 세로 정렬 */
+  align-items: flex-start; /* 왼쪽 정렬 */
+  width: 100%;
+  background: #232346;
+  border-radius: 10px;
+  padding: 7px 18px 7px 18px;
+  font-size: 17px;
+  color: #ffe161;
+  gap: 1px;
+}
+.equipstat-flex span {
+  color: #e3e3e3;
+  font-size: 16px;
+  letter-spacing: 0.4px;
+}
+.equipstat-flex b {
+  color: #ffe161;
+  font-weight: 700;
+}
+</style>
 </head>
 <body>
-<div id="main">
   <div id="loadslotbox"></div>
-  <div id="userinfo" style="display:none"></div>
-  <div class="btn-bar" id="menubar" style="display:none">
-    <button onclick="action('hunt')">사냥</button>
-    <button onclick="dungeonEnterUI()">던전</button>
-    <button onclick="showChar()">캐릭터</button>
-    <button onclick="showInv()">소지품</button>
-    <button onclick="showTown()">마을</button>
+  <div id="mainwrap" style="display:none">
+    <div id="centerwrap">
+      <div id="userinfo" style="display:none"></div>
+      <div id="equipstatbox" style="margin-bottom:18px; display:none"></div>
+      <div class="log" id="logbox"></div>
+    </div>
+    <div id="sidebar">
+      <div class="btn-bar" id="menubar" style="display:none">
+        <button onclick="action('hunt')">사냥</button>
+        <button onclick="dungeonEnterUI()">던전</button>
+        <button onclick="showChar()">캐릭터</button>
+        <button onclick="showInv()">소지품</button>
+        <button onclick="showTown()">마을</button>
+      </div>
+      <div class="save-bar" id="savebar" style="display:none">
+        <button onclick="saveGame()">💾 세이브</button>
+        <button onclick="showLoad()">불러오기</button>
+        <span style="color:#aaa;">(슬롯 <span id="slotsel"></span>)</span>
+      </div>
+    </div>
   </div>
-  <div class="save-bar" id="savebar" style="display:none">
-    <button onclick="saveGame()">💾 세이브</button>
-    <button onclick="showLoad()">불러오기</button>
-    <span style="color:#aaa;">(슬롯 <span id="slotsel"></span>)</span>
-  </div>
-  <div class="log" id="logbox"></div>
-</div>
-<script>
+  <script>
 const itemStatTable = {
   "일반":     { base:[0, 2],    atk:[1, 3]   },
   "레어":     { base:[2, 4],    atk:[3, 6]   },
@@ -219,6 +449,8 @@ function startGame(slot) {
   let data = localStorage.getItem("elgasia_save_"+slot);
   if (data) {
     user = JSON.parse(data); if(!user.storage) user.storage=[];
+    document.getElementById("loadslotbox").style.display = "none";
+    document.getElementById("mainwrap").style.display = "";
     showUI(); updateUser();
     log(`<span style='color:#aff'>불러오기 완료! 슬롯 ${slot}</span>`);
   } else {
@@ -256,6 +488,7 @@ function expNeed(lv){ return Math.floor(Math.pow(lv,1.5)*12)+lv*8; }
 function log(msg){ document.getElementById("logbox").innerHTML = msg; }
 function updateUser() {
   if(!user.storage) user.storage=[];
+  // 기본 정보
   document.getElementById("userinfo").innerHTML = `<div class="stat-box">
     <span>이름 <b>${user.name}</b> <button class="inv-btn" onclick="promptNameChange()">변경</button></span>
     <span>레벨 <b>${user.level}</b></span>
@@ -265,6 +498,39 @@ function updateUser() {
     <span>강화석 <b>${user.stones||0}</b></span>
     <span>창고 <b>${user.storage.length}/100</b></span>
   </div>`;
+  document.getElementById("userinfo").style.display = "";
+
+  // 장비 합산 스탯 계산 및 표시
+  let baseStats = user.stats.slice();
+  let equipStats = user.stats.slice();
+  let addATK = 0, addRATK = 0, addMATK = 0, addDEF = 0;
+  for (let slot of equipSlots) {
+    let eq = user.equip[slot];
+    if(eq && eq.stat){
+      for(let i=0; i<5; i++){
+        equipStats[i] += eq.stat[i]||0;
+      }
+      addATK += eq.stat[5]||0;
+      addRATK += eq.stat[6]||0;
+      addMATK += eq.stat[7]||0;
+      addDEF += eq.stat[3]||0;
+    }
+  }
+  let totalATK = addATK + equipStats[0];
+  let totalRATK = addRATK + equipStats[1];
+  let totalMATK = addMATK + equipStats[2];
+  let totalDEF = equipStats[3];
+  let statLabel = ["STR(근력)","DEX(민첩)","INT(지능)","VIT(체력)","LUK(운)"];
+  let equipStr = equipStats.map((v,i)=>`${statLabel[i]}: <b>${v}</b>`).join(" / ");
+  let atkStr = `ATK(근접): <b>${totalATK}</b> / RATK(원거리): <b>${totalRATK}</b> / MATK(마법): <b>${totalMATK}</b> / DEF: <b>${totalDEF}</b>`;
+
+document.getElementById("equipstatbox").innerHTML =
+  `<div class="equipstat-flex">
+     <span>${equipStr}</span>
+     <br>
+     <span>${atkStr}</span>
+   </div>`;
+document.getElementById("equipstatbox").style.display = "";
 }
 function rarityBonus(r){
   if(r=="일반")return 0; if(r=="레어")return 1; if(r=="유니크")return 2;
