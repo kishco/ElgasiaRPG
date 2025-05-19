@@ -2,61 +2,74 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Elgasia - Text RPG ver1.015</title>
+  <title>Elgasia RPG ver1.06</title>
   <style>
-    body { font-family: 'Malgun Gothic', sans-serif; background: #232236; color: #fff; margin: 0; padding: 0;}
-    #main { max-width: 900px; margin: 40px auto; background: #181828; padding: 30px; border-radius: 20px; box-shadow: 0 0 30px #0008;}
-    .stat-box { margin: 12px 0 24px 0; }
-    .stat-box span { display: inline-block; margin-right: 18px; font-size: 18px; }
-    .btn-bar button { background: #384085; color: #fff; border: none; border-radius: 7px; margin: 4px; padding: 10px 20px; font-size: 17px; cursor: pointer; transition: background 0.15s;}
-    .btn-bar button:disabled { background: #333; color: #aaa; cursor: not-allowed; }
-    .equip-rare { color: #51cafc; } .equip-unique { color: #d76bff; } .equip-epic { color: #ff90b5; }
-    .equip-legend { color: gold; } .equip-myth { color: #fa4242; font-weight: bold;}
-    .equip-normal { color: #fff;}
-    .log { border: 1px solid #222; background: #191934; margin: 16px 0; border-radius: 10px; min-height: 120px; padding: 14px; font-size:17px;}
+    body { background: #181828; color: #fff; margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif;}
+    #mainwrap { max-width: 1500px; margin: 30px auto; display: flex; flex-direction: column; gap: 25px;}
+    .rowflex { display: flex; flex-direction: row; gap: 30px; }
+    #chatbox { background: #3c3c5a; border-radius: 28px; min-width: 340px; width: 340px; min-height: 420px; display: flex; align-items: center; justify-content: center; }
+    #chatbox iframe { border-radius: 20px; border: none; width: 95%; height: 90%; min-height: 410px; }
+    #stat-content-box { background: #191934; border-radius: 28px; flex: 1; min-width: 430px; padding: 32px 0 32px 0; min-height: 420px; display: flex; align-items: flex-start; justify-content: center;}
+    #stat-content { width: 90%; }
+    #sidebar { background: #191934; border-radius: 28px; min-width: 270px; width: 270px; padding: 24px 0; display: flex; flex-direction: column; gap: 15px; align-items: center;}
+    .sidebtn { width: 200px; padding: 16px 0; font-size: 20px; border-radius: 12px; border: 2px solid #353575; background: #2e2e6e; color: #fff; margin-bottom: 6px; font-weight: bold; cursor: pointer; transition: background 0.13s;}
+    .sidebtn:hover { background: #383890;}
+    #battle-log-box { background: #161625; border-radius: 16px; min-height: 130px; margin: 0 0 0 0; }
+    #battle-log { min-height: 130px; padding: 22px 28px; font-size: 18px; }
+    /* 기타 스타일 */
+    .equipitem, .shop-item { margin:8px 0; padding:10px 12px; border-radius:8px; background: #21214a; }
     .inv-btn { margin-left: 8px; background: #384085; color: #fff; border: none; border-radius: 5px; padding: 2px 9px; font-size: 14px;}
     .inv-btn:disabled { color: #888;}
-    .equipitem { font-size: 15px;}
-    .equip-bonus {font-size:14px;color:#b8ffad;}
-    .namebox input { font-size:18px; padding:3px 8px; border-radius:7px; border:1px solid #555;}
-    .save-bar button { background: #515b9d; color: #fff; border: none; border-radius: 6px; margin: 2px; padding: 7px 15px; font-size: 15px;}
-    .save-slot-btn { background:#2e2e4e; color:#fff; margin:7px; padding:15px 30px; font-size:22px; border-radius:10px; border:none;}
-    .shop-item { margin:8px 0; padding:12px; border-radius:10px; background: #21214a; box-shadow: 0 2px 8px #0003;}
-    .shop-item .equip-bonus { color:#bbeeff; }
     .shop-title { color:#ffe680; font-size: 21px; margin-bottom:10px;}
-    .enhance-btn { background: #1f8e26; color: #fff; margin-left:12px; border-radius:6px;}
-    .fail-msg { color:#ff6161; font-weight:bold; }
-    .succ-msg { color:#8aff8a; font-weight:bold; }
-    .enh-lv { color:#e7e553; font-weight:bold;}
-    .monname { color:#ffd700; font-weight:bold;}
-    .save-del-btn { background:#a23c3c; color:#fff; border-radius:7px; border:none; font-size:14px; padding:4px 14px; margin-left:8px;}
-    .ilv-txt { color:#9ed1f7; font-weight:bold; margin-right:8px; }
-    .skill-log { color:#ffea64; font-weight:bold; }
-    .dmg-log { color:#fba; }
-    .dead-log { color:#fa4247; font-weight:bold; }
-    .unique-monster { color:#ff5555; font-weight:bold; }
+    .succ-msg { color:#8aff8a; font-weight:bold;}
+    .fail-msg { color:#ff6161; font-weight:bold;}
+    .dead-log { color:#fa4247; font-weight:bold;}
     .set-bonus { color: #ffe161; font-weight: bold;}
+    .monname { color:#ffd700; font-weight:bold;}
+    .unique-monster { color:#ff5555; font-weight:bold;}
+    .stat-box { margin-bottom: 28px; font-size: 18px;}
+    .stat-box span { display: inline-block; margin-right: 18px; }
+    /* 스크롤바 커스텀 */
+    ::-webkit-scrollbar {width:8px;}
+    ::-webkit-scrollbar-thumb {background:#333;border-radius:6px;}
+    ::selection { background: #384085; color:#fff; }
   </style>
 </head>
 <body>
-<div id="main">
-  <div id="loadslotbox"></div>
-  <div id="userinfo" style="display:none"></div>
-  <div class="btn-bar" id="menubar" style="display:none">
-    <button onclick="action('hunt')">사냥</button>
-    <button onclick="dungeonEnterUI()">던전</button>
-    <button onclick="showChar()">캐릭터</button>
-    <button onclick="showInv()">소지품</button>
-    <button onclick="showTown()">마을</button>
+  <div id="mainwrap">
+    <div class="rowflex">
+      <!-- 왼쪽 채팅 -->
+      <div id="chatbox">
+        <iframe src="https://tlk.io/elasiarpg" allowtransparency="true"></iframe>
+      </div>
+      <!-- 중앙 스탯/내용 -->
+      <div id="stat-content-box">
+        <div id="stat-content">게임을 불러와주세요.</div>
+      </div>
+      <!-- 오른쪽 UI 버튼 -->
+      <div id="sidebar">
+        <button class="sidebtn" onclick="action('hunt')">사냥</button>
+        <button class="sidebtn" onclick="dungeonEnterUI()">던전</button>
+        <button class="sidebtn" onclick="showChar()">스탯/장비</button>
+        <button class="sidebtn" onclick="showInv()">소지품</button>
+        <button class="sidebtn" onclick="showTown()">마을</button>
+        <button class="sidebtn" onclick="saveGame()">세이브</button>
+        <button class="sidebtn" onclick="showLoad()">불러오기</button>
+      </div>
+    </div>
+    <!-- 하단 전투로그 -->
+    <div id="battle-log-box">
+      <div id="battle-log">불러올 슬롯을 선택하세요.</div>
+    </div>
   </div>
-  <div class="save-bar" id="savebar" style="display:none">
-    <button onclick="saveGame()">💾 세이브</button>
-    <button onclick="showLoad()">불러오기</button>
-    <span style="color:#aaa;">(슬롯 <span id="slotsel"></span>)</span>
-  </div>
-  <div class="log" id="logbox"></div>
-</div>
 <script>
+/* ========== 전역 데이터/상수/유틸 ========== */
+let user = null, saveSlot = 1;
+
+function rint(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+const statNames = ["STR", "DEX", "INT", "VIT", "LUK"];
+const equipSlots = ["머리", "상의", "하의", "손", "신발", "무기", "방패"];
 const itemStatTable = {
   "일반":     { base:[0, 2],    atk:[1, 3]   },
   "레어":     { base:[2, 4],    atk:[3, 6]   },
@@ -73,29 +86,6 @@ const armorSkillEffectScale = {
   "레전더리": 2,
   "유일":     3
 };
-const armorSkillPool = [
-  { name: "생명회복",     type: "regen",      base: [1, 2]  },  // 턴마다 %회복
-  { name: "피해흡혈",     type: "leech",      base: [1, 2]  },  // 피해의 % 흡수
-  { name: "받는피해감소", type: "dmgreduce",  base: [2, 4]  },  // %감소
-  { name: "첫피격무시",   type: "ignorehit",  base: [1, 1]  },  // n회
-  { name: "사망방지",     type: "deathproof", base: [1, 1]  },  // n회
-  { name: "공격반사",     type: "reflect",    base: [2, 3]  },  // %반사
-  { name: "회피증가",     type: "evadeup",    base: [3, 4]  },  // %상승
-  { name: "실드부여",     type: "shield",     base: [20, 24]}   // 실드량
-];
-const armorSkillLogEffects = {
-  "regen":        { icon:"💚",  color:"#5eff86",  msg: v=>`HP +${v}% 회복` },
-  "leech":        { icon:"🩸",  color:"#c9488a",  msg: v=>`피해의 ${v}% 흡혈` },
-  "dmgreduce":    { icon:"🛡️", color:"#a1f2ff",  msg: v=>`받는 피해 -${v}%` },
-  "ignorehit":    { icon:"🧱",  color:"#c8d7e2",  msg: v=>`첫 피격 무시` },
-  "deathproof":   { icon:"⚰️",  color:"#f0f055",  msg: v=>`사망방지` },
-  "reflect":      { icon:"🪞",  color:"#8ef6f2",  msg: v=>`공격반사 +${v}%` },
-  "evadeup":      { icon:"🏃‍♂️",color:"#8af8a7",  msg: v=>`회피 +${v.toFixed(1)}%` },
-  "shield":       { icon:"🛡️", color:"#e3ffd8",  msg: v=>`실드 +${v}` },
-};
-
-const statNames = ["STR", "DEX", "INT", "VIT", "LUK"];
-const equipSlots = ["머리", "상의", "하의", "손", "신발", "무기", "방패"];
 const prefixes = ["불타는", "신속한", "고대의", "빛나는", "강인한", "재빠른", "현자의", "암흑의", "단단한", "용맹한"];
 const suffixes = ["광기", "지혜", "속도", "행운", "힘", "수호", "파멸", "마법", "불멸", "용기"];
 const rarityOrder = ["일반","레어","유니크","에픽","레전더리","유일"];
@@ -141,46 +131,31 @@ const uniqueMonsterPrefixes = {
   "수암룡 타나로토스": "수암",
   "암토룡 우로보로스": "토암"
 };
-// 유일 세트 효과
 const uniqueSetBonus = {
   "광휘": { name: "광휘 세트", desc: "1턴 2회 공격" },
   "흑섬": { name: "흑섬 세트", desc: "공격 시 30% 확률로 1턴 스턴" },
   "수암": { name: "수암 세트", desc: "피격 시 40% 확률로 50% 반사" },
   "토암": { name: "토암 세트", desc: "전투 중 1회 사망 시 50% 부활" }
 };
-let user = null; let saveSlot = 1;
-function rint(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-// 몬스터 생성
-function makeMonster(level, isDungeon = false) {
-  if(isDungeon && Math.random() < 0.01) {
-    let name = uniqueMonsters[rint(0, uniqueMonsters.length-1)];
-    let hp = Math.floor(40 + level*4 + rint(10,40));
-    let atk = Math.floor(8 + level*2 + rint(5,10));
-    let def = Math.floor(level/6 + rint(2,8));
-    return { name, hp, atk, def, unique: true };
-  }
-  let prefix = monsterPrefixes[rint(0, monsterPrefixes.length - 1)];
-  let nameBase = monsterNames[rint(0, monsterNames.length - 1)];
-  let name = prefix + " " + nameBase;
-  let hp = Math.floor(12 + level*2.5 + rint(0,4));
-  let atk = Math.floor(3 + level*0.8 + rint(0,2));
-  let def = Math.floor(level/5 + rint(0,1));
-  return { name, hp, atk, def, unique: false };
-}
-// 세이브/불러오기/슬롯삭제
-window.onload = function() { renderSaveSlotSelect(); };
+
+function updateStatBox(html) { document.getElementById("stat-content").innerHTML = html; }
+function log(msg) { document.getElementById("battle-log").innerHTML = msg; }
+
+// ====== 게임 진입시 세이브 슬롯 선택 ======
+window.onload = function() { renderSaveSlotSelect(); }
 function renderSaveSlotSelect() {
   let html = `<div class="save-slot-select"><b>불러올 슬롯을 선택하세요</b><br>`;
   for(let i=1;i<=3;i++){
     let data = localStorage.getItem("elgasia_save_"+i);
     let btnText = data ? `슬롯${i} (${JSON.parse(data).name} Lv.${JSON.parse(data).level})` : `슬롯${i} (새 시작)`;
     html += `<div style="margin-bottom:8px;display:flex;align-items:center;">
-      <button class="save-slot-btn" onclick="startGame(${i})">${btnText}</button>
-      <button class="save-del-btn" onclick="deleteSaveSlot(${i})">삭제</button>
+      <button class="inv-btn" onclick="startGame(${i})">${btnText}</button>
+      <button class="inv-btn" onclick="deleteSaveSlot(${i})" style="background:#d36c6c;">삭제</button>
     </div>`;
   }
   html += `</div>`;
-  document.getElementById("loadslotbox").innerHTML = html;
+  updateStatBox(html);
+  log("불러올 슬롯을 선택하세요.");
 }
 function deleteSaveSlot(slot) {
   if(confirm(`정말로 슬롯${slot}의 저장 데이터를 삭제하시겠습니까? 복구할 수 없습니다.`)){
@@ -188,38 +163,13 @@ function deleteSaveSlot(slot) {
     renderSaveSlotSelect();
   }
 }
-function saveGame() {
-  if (!user) return;
-  localStorage.setItem("elgasia_save_"+saveSlot, JSON.stringify(user));
-  log(`<span style='color:#aaf'>슬롯 ${saveSlot}에 저장되었습니다!</span>`);
-}
-function loadGame(slot) {
-  let data = localStorage.getItem("elgasia_save_"+slot);
-  if (data) {
-    user = JSON.parse(data); saveSlot = slot;
-    if(!user.storage) user.storage=[];
-    showUI(); updateUser();
-    log(`<span style='color:#aff'>불러오기 완료! 슬롯 ${slot}</span>`);
-  }
-}
-function showLoad() {
-  let html = `<b>불러올 슬롯 선택</b><br>`;
-  for(let i=1;i<=3;i++){
-    let data = localStorage.getItem("elgasia_save_"+i);
-    let btnText = data ? `슬롯${i} 불러오기 (${JSON.parse(data).name} Lv.${JSON.parse(data).level})` : `슬롯${i} (비어있음)`;
-    html += `<button class="save-slot-btn" onclick="loadGame(${i});hideLoad();">${btnText}</button>
-    <button class="save-del-btn" onclick="deleteSaveSlot(${i})">삭제</button><br>`;
-  }
-  html += `<br><button class="inv-btn" onclick="hideLoad()">닫기</button>`;
-  document.getElementById("logbox").innerHTML = html;
-}
-function hideLoad(){ log('이전 화면으로 돌아감'); }
 function startGame(slot) {
   saveSlot = slot;
   let data = localStorage.getItem("elgasia_save_"+slot);
   if (data) {
     user = JSON.parse(data); if(!user.storage) user.storage=[];
-    showUI(); updateUser();
+    showMainUI();
+    updateUser();
     log(`<span style='color:#aff'>불러오기 완료! 슬롯 ${slot}</span>`);
   } else {
     user = {
@@ -227,16 +177,10 @@ function startGame(slot) {
       stats: [1,1,1,1,1], statmax: 9999, hp: 30, maxhp: 30,
       equip: {}, inv: [], town: {restcount:0,skillstone:1}, stones: 0, storage: []
     };
-    showUI(); updateUser();
+    showMainUI();
+    updateUser();
     log(`<b>환영합니다! 캐릭터 이름을 먼저 정해주세요.</b> <br><div class="namebox"><input type="text" id="newname" maxlength="10" placeholder="캐릭터 이름"/><button class="inv-btn" onclick="setCharName()">확인</button></div>`);
   }
-}
-function showUI() {
-  document.getElementById("loadslotbox").style.display = "none";
-  document.getElementById("userinfo").style.display = "";
-  document.getElementById("menubar").style.display = "";
-  document.getElementById("savebar").style.display = "";
-  document.getElementById("slotsel").innerText = saveSlot;
 }
 function setCharName() {
   let n = document.getElementById("newname").value.trim();
@@ -246,32 +190,273 @@ function setCharName() {
   log(`이름이 <b>${n}</b>으로 설정되었습니다!`);
   saveGame();
 }
-function promptNameChange() {
-  let n = prompt("새 캐릭터 이름을 입력하세요", user.name || "");
-  if(!n) return;
-  user.name = n;
-  updateUser(); saveGame();
+function showLoad() { renderSaveSlotSelect(); }
+
+function showMainUI() { // 중앙 내용 다시 stat-content만 쓰도록
+  showChar();
 }
-function expNeed(lv){ return Math.floor(Math.pow(lv,1.5)*12)+lv*8; }
-function log(msg){ document.getElementById("logbox").innerHTML = msg; }
+</script>
+<script>
+/* ==== 기존 코드와 100% 연동 ==== */
+
+// 스탯, 정보, 장비창
 function updateUser() {
-  if(!user.storage) user.storage=[];
-  document.getElementById("userinfo").innerHTML = `<div class="stat-box">
+  if (!user.storage) user.storage = [];
+  let statLabel = ["STR(근력)", "DEX(민첩)", "INT(지능)", "VIT(체력)", "LUK(운)"];
+  let baseStats = user.stats.slice();
+  let equipStats = user.stats.slice();
+  let addATK = 0, addRATK = 0, addMATK = 0, addDEF = 0;
+  for (let slot of equipSlots) {
+    let eq = user.equip[slot];
+    if (eq && eq.stat) {
+      for (let i = 0; i < 5; i++) equipStats[i] += eq.stat[i] || 0;
+      addATK += eq.stat[5] || 0;
+      addRATK += eq.stat[6] || 0;
+      addMATK += eq.stat[7] || 0;
+      addDEF += eq.stat[3] || 0;
+    }
+  }
+  let totalATK = addATK + equipStats[0];
+  let totalRATK = addRATK + equipStats[1];
+  let totalMATK = addMATK + equipStats[2];
+  let totalDEF = equipStats[3];
+  let baseStr = baseStats.map((v, i) => `${statLabel[i]}: ${v}`).join(" / ");
+  let equipStr = equipStats.map((v, i) => `${statLabel[i]}: ${v}`).join(" / ");
+  let eqhtml = "";
+  for (let slot of equipSlots) {
+    let eq = user.equip[slot];
+    if (eq) {
+      eqhtml += `<div><b>${slot}:</b> ${itemDisplay(eq)}
+      <button class="inv-btn" onclick="unequip('${slot}')">해제</button></div>
+      ${eq.skill ? `<div class="equip-bonus">스킬: ${eq.skill}</div>` : ""}`;
+    } else {
+      eqhtml += `<div><b>${slot}:</b> <span style="color:#888">비어있음</span></div>`;
+    }
+  }
+  let setBonusKey = checkUniqueSetBonus();
+  let setBonusMsg = setBonusKey ? `<br><span class="set-bonus">[${uniqueSetBonus[setBonusKey].name} 세트 효과: ${uniqueSetBonus[setBonusKey].desc}]</span>` : "";
+  let html = `<div class="stat-box">
     <span>이름 <b>${user.name}</b> <button class="inv-btn" onclick="promptNameChange()">변경</button></span>
     <span>레벨 <b>${user.level}</b></span>
     <span>경험치 <b>${user.exp}/${expNeed(user.level)}</b></span>
     <span>골드 <b>${user.gold}</b></span>
     <span>HP <b>${user.hp}/${user.maxhp}</b></span>
-    <span>강화석 <b>${user.stones||0}</b></span>
+    <span>강화석 <b>${user.stones || 0}</b></span>
     <span>창고 <b>${user.storage.length}/100</b></span>
-  </div>`;
+  </div>
+  <b>기본 스탯:</b> ${baseStr}<br>
+  <b>장비 적용:</b> ${equipStr}<br>
+  <b>[공격/방어]</b> ATK(근접): <b>${totalATK}</b> / RATK(원거리): <b>${totalRATK}</b> / MATK(마법): <b>${totalMATK}</b> / DEF: <b>${totalDEF}</b><br>
+  <b>HP:</b> ${user.hp}/${user.maxhp}<br>
+  <b>장착장비</b><br>${eqhtml}${setBonusMsg}`;
+  updateStatBox(html);
 }
-function rarityBonus(r){
-  if(r=="일반")return 0; if(r=="레어")return 1; if(r=="유니크")return 2;
-  if(r=="에픽")return 3; if(r=="레전더리")return 4; if(r=="유일")return 5;
+function showChar() { updateUser(); }
+function promptNameChange() {
+  let n = prompt("새 캐릭터 이름을 입력하세요", user.name || "");
+  if (!n) return;
+  user.name = n;
+  updateUser(); saveGame();
+}
+function expNeed(lv) { return Math.floor(Math.pow(lv, 1.5) * 12) + lv * 8; }
+function checkUniqueSetBonus() {
+  const armorSlots = ["머리", "상의", "하의", "손", "신발"];
+  let found = { 광휘: 0, 흑섬: 0, 수암: 0, 토암: 0 };
+  for (let slot of armorSlots) {
+    let eq = user.equip[slot];
+    if (eq && eq.rarity === "유일") {
+      let pre = eq.uniqPrefix || (eq.name.split("의")[0]);
+      if (found[pre] !== undefined) found[pre]++;
+    }
+  }
+  for (let key in found) if (found[key] >= 4) return key;
+  return null;
+}
+function unequip(slot) {
+  if (!user.equip[slot]) return;
+  addInv(user.equip[slot]);
+  user.equip[slot] = undefined;
+  showChar();
+}
+function saveGame() {
+  if (!user) return;
+  localStorage.setItem("elgasia_save_" + saveSlot, JSON.stringify(user));
+  log(`<span style='color:#aaf'>슬롯 ${saveSlot}에 저장되었습니다!</span>`);
+}
+
+// ================= 소지품/창고 ==================
+function itemDisplay(item) {
+  return `<span class="${rarityColors[item.rarity]}">[${item.rarity}]</span> ${item.name} <span class="equip-bonus">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]} ${item.attackType === "근접" ? `ATK:${item.stat[5]}` : ""}${item.attackType === "원거리" ? `RATK:${item.stat[6]}` : ""}${item.attackType === "마법" ? `MATK:${item.stat[7]}` : ""}</span> ${item.skill ? `<span class="equip-bonus">스킬:${item.skill}</span>` : ""}${item.armorSkill ? ` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${typeof item.armorSkill.value === "number" ? item.armorSkill.value.toFixed(1) : item.armorSkill.value})</span>` : ""}${item.enh ? ` <span class="enh-lv">+${item.enh}</span>` : ""}`;
+}
+function showInv() {
+  let invhtml = "";
+  user.inv.forEach((item, i) => {
+    invhtml += `<div class="equipitem">${itemDisplay(item)}
+      <button class="inv-btn" onclick="equipItem(${i})">착용</button>
+      <button class="inv-btn" onclick="sellInv(${i})">판매</button></div>`;
+  });
+  if (!invhtml) invhtml = "<div style='color:#888'>소지품이 없습니다.</div>";
+  let html = `<b>[소지품]</b> (${user.inv.length}/${inventoryLimit})<br>${invhtml}<br>
+    <button class="inv-btn" onclick="sellAllInv()">전체 판매 (착용 제외)</button><br>
+    <button class="inv-btn" onclick="showChar()">돌아가기</button>`;
+  updateStatBox(html);
+}
+function equipItem(idx) {
+  let item = user.inv[idx];
+  if (!item || !item.slot || equipSlots.indexOf(item.slot) === -1) return;
+  if (user.equip[item.slot]) addInv(user.equip[item.slot]);
+  user.equip[item.slot] = item;
+  user.inv.splice(idx, 1);
+  showInv(); updateUser();
+}
+function sellInv(idx) {
+  let item = user.inv[idx];
+  let sellValue = 5 + (rarityBonus(item.rarity) * 10);
+  user.gold += sellValue;
+  user.inv.splice(idx, 1);
+  log(`${itemDisplay(item)}<br><span style="color:#ffe55e">${sellValue}G에 판매되었습니다!</span><br><button class="inv-btn" onclick="showInv()">돌아가기</button>`);
+  updateUser();
+}
+function sellAllInv() {
+  if (user.inv.length === 0) { log("판매할 아이템이 없습니다."); return; }
+  let totalGold = 0;
+  let soldNames = [];
+  let filteredInv = user.inv.filter(item => {
+    for (let slot of equipSlots) {
+      if (user.equip[slot] && user.equip[slot].name === item.name) return false;
+    }
+    return true;
+  });
+  if (filteredInv.length === 0) { log("판매할 아이템이 없습니다. (착용 중 아이템 제외)"); return; }
+  filteredInv.forEach(item => {
+    let idx = user.inv.indexOf(item);
+    if (idx >= 0) user.inv.splice(idx, 1);
+    let sellValue = 5 + (rarityBonus(item.rarity) * 10);
+    totalGold += sellValue;
+    soldNames.push(item.name);
+  });
+  user.gold += totalGold;
+  log(`착용 중이 아닌 모든 아이템 판매 완료! 총 ${totalGold}골드를 얻었다.<br>판매한 아이템: ${soldNames.join(", ")}<br><button class="inv-btn" onclick="showInv()">소지품으로 돌아가기</button>`);
+  updateUser();
+}
+function addInv(item) {
+  if (user.inv.length >= inventoryLimit) { log("소지품이 가득 찼다!"); return false; }
+  user.inv.push(item); return true;
+}
+function rarityBonus(r) {
+  if (r == "일반") return 0; if (r == "레어") return 1; if (r == "유니크") return 2;
+  if (r == "에픽") return 3; if (r == "레전더리") return 4; if (r == "유일") return 5;
   return 0;
 }
-// ---- 아이템 생성 (스킬 확률 및 유일 세트/스킬)
+
+// ====================== 마을, 상점, 강화 =====================
+function showTown() {
+  let html = `<b>[마을]</b><br>
+    <button class="inv-btn" onclick="innRest()">여관(휴식)</button>
+    <button class="inv-btn" onclick="showShop()">장비상점</button>
+    <button class="inv-btn" onclick="showEnhance()">강화소</button>
+    <button class="inv-btn" onclick="showChar()">돌아가기</button>`;
+  updateStatBox(html);
+}
+function innRest() {
+  let cost = 20 + user.level * 5;
+  if (user.gold < cost) { log("골드가 부족합니다."); return; }
+  user.gold -= cost; user.hp = user.maxhp;
+  log(`여관에서 휴식 후 HP 전부 회복! (${cost}골드 소모)<br><button class='inv-btn' onclick='showTown()'>돌아가기</button>`);
+  updateUser();
+}
+function showShop() {
+  let items = [];
+  for (let i = 0; i < 5; i++) items.push(makeItem(false, true));
+  let html = `<div class="shop-title">[장비 상점] (에픽 등급 이상은 미출현)</div>`;
+  items.forEach((item, idx) => {
+    html += `<div class="shop-item">${itemDisplay(item)}
+      <button class="inv-btn" onclick="buyShopItem(${idx})">구매 (${50 + user.level * 8}G)</button></div>`;
+  });
+  html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
+  updateStatBox(html); window.shopItems = items;
+}
+function buyShopItem(idx) {
+  let item = window.shopItems[idx];
+  let cost = 50 + user.level * 8;
+  if (user.gold < cost) { log("골드가 부족합니다."); return; }
+  if (user.inv.length >= inventoryLimit) { log("소지품이 가득 찼다!"); return; }
+  user.gold -= cost;
+  user.inv.push(item);
+  log(`구매 완료!<br>${itemDisplay(item)}<br><button class="inv-btn" onclick="showShop()">상점으로</button>`);
+  updateUser();
+}
+function showEnhance() {
+  let html = `<div class="shop-title">[장비 강화]</div>`;
+  let equips = Object.values(user.equip).filter(e => e);
+  if (!equips.length) {
+    html += `<div style="color:#888">강화할 장비가 없습니다.</div>`;
+  } else {
+    equips.forEach((eq, idx) => {
+      html += `<div class="shop-item">${itemDisplay(eq)}<button class="inv-btn" onclick="enhanceItem('${eq.slot}')">강화</button></div>`;
+    });
+  }
+  html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
+  updateStatBox(html);
+}
+function enhanceItem(slot) {
+  let eq = user.equip[slot];
+  if (!eq) return;
+  let lv = eq.enh || 0;
+  if (lv >= 20) { log("최대 강화 단계입니다."); return; }
+  let needStone = lv < 5 ? [1, 2, 4, 8, 20][lv] : lv < 10 ? 20 * Math.pow(2, lv - 4) : lv < 15 ? 60 * Math.pow(3, lv - 9) : 120 * Math.pow(4, lv - 14);
+  let needGold = 100 + lv * 50;
+  if (user.stones < needStone) { log("강화석이 부족합니다."); return; }
+  if (user.gold < needGold) { log("골드가 부족합니다."); return; }
+  let prob = lv < 4 ? 1 : lv < 10 ? 0.5 - (lv - 4) * 0.08 : lv < 15 ? 0.12 - (lv - 10) * 0.025 : 0.04 - (lv - 15) * 0.007;
+  if (prob < 0.01) prob = 0.01;
+  let succ = Math.random() < prob;
+  user.stones -= needStone;
+  user.gold -= needGold;
+  if (succ) {
+    eq.enh = lv + 1;
+    if (eq.slot === "무기") {
+      let atkIndex = 5;
+      if (eq.attackType === "원거리") atkIndex = 6;
+      else if (eq.attackType === "마법") atkIndex = 7;
+      eq.stat[atkIndex] = (eq.stat[atkIndex] || 0) + rint(1, 3);
+      log(`<span class="succ-msg">[+${eq.enh} 강화 성공! 주요 공격력이 상승했습니다!]</span> 골드 ${needGold}소모, 강화석 ${needStone}소모`);
+    } else {
+      let statIdx = rint(0, 4);
+      eq.stat[statIdx] = (eq.stat[statIdx] || 0) + rint(1, 3);
+      log(`<span class="succ-msg">[+${eq.enh} 강화 성공! 스탯이 랜덤으로 상승했습니다!]</span> 골드 ${needGold}소모, 강화석 ${needStone}소모`);
+    }
+  } else {
+    log(`<span class="fail-msg">[강화 실패] 골드 ${needGold}소모, 강화석 ${needStone}소모</span>`);
+  }
+  updateUser();
+  showEnhance();
+}
+
+// ====== 아이템 생성, 몬스터 생성, 전투, 사냥, 던전 ======
+</script>
+<script>
+/* ==== 전투/던전/사냥/레벨업/몬스터/아이템 ==== */
+
+// ==== 몬스터 생성 ====
+function makeMonster(level, isDungeon = false) {
+  if (isDungeon && Math.random() < 0.01) {
+    let name = uniqueMonsters[rint(0, uniqueMonsters.length - 1)];
+    let hp = Math.floor(40 + level * 4 + rint(10, 40));
+    let atk = Math.floor(8 + level * 2 + rint(5, 10));
+    let def = Math.floor(level / 6 + rint(2, 8));
+    return { name, hp, atk, def, unique: true };
+  }
+  let prefix = monsterPrefixes[rint(0, monsterPrefixes.length - 1)];
+  let nameBase = monsterNames[rint(0, monsterNames.length - 1)];
+  let name = prefix + " " + nameBase;
+  let hp = Math.floor(12 + level * 2.5 + rint(0, 4));
+  let atk = Math.floor(3 + level * 0.8 + rint(0, 2));
+  let def = Math.floor(level / 5 + rint(0, 1));
+  return { name, hp, atk, def, unique: false };
+}
+
+// ==== 아이템 생성 ====
 function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   let rate = allowMyth ? dungeonRate : rarityRate;
   let localRarityOrder = isShop ? ["일반","레어","유니크"] : rarityOrder;
@@ -281,13 +466,11 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   for (let i=0;i<localRate.length;i++) { acc += localRate[i]; if (r < acc) { rarity = localRarityOrder[i]; break; } }
   if(!uniqueMonsterName && rarity === "유일") rarity = "레전더리";
   if(uniqueMonsterName) rarity = "유일";
-
   let slot = equipSlots[rint(0, equipSlots.length-1)];
   let pool = slotTypePool[slot];
   let baseObj = pool[rint(0, pool.length-1)];
   let itemType = baseObj.name;
   let itemAttackType = baseObj.type || null;
-
   // 유일 아이템(이름/스탯/스킬 규칙 적용)
   if(rarity === "유일" && uniqueMonsterName) {
     let uniqPrefix = uniqueMonsterPrefixes[uniqueMonsterName] || "유일";
@@ -308,7 +491,6 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
       skill, enh: 0, ilv: null, unique: true, uniqPrefix
     };
   }
-
   // 일반~레전더리 아이템
   let prefix = prefixes[rint(0,prefixes.length-1)];
   let suffix = suffixes[rint(0,suffixes.length-1)];
@@ -332,16 +514,24 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   stat.push(Math.floor(atk * skillBonus));
   stat.push(Math.floor(ratk * skillBonus));
   stat.push(Math.floor(matk * skillBonus));
-
-  // 🟢 방어구 스킬 부여 (방어구만, 무기/방패/유일 제외)
+  // 방어구 스킬 부여 (방어구만, 무기/방패/유일 제외)
   let armorSkill = null;
   if (["머리","상의","하의","손","신발"].includes(slot) && rarity !== "유일" && Math.random()<0.40) {
+    let armorSkillPool = [
+      { name: "생명회복",     type: "regen",      base: [1, 2]  },
+      { name: "피해흡혈",     type: "leech",      base: [1, 2]  },
+      { name: "받는피해감소", type: "dmgreduce",  base: [2, 4]  },
+      { name: "첫피격무시",   type: "ignorehit",  base: [1, 1]  },
+      { name: "사망방지",     type: "deathproof", base: [1, 1]  },
+      { name: "공격반사",     type: "reflect",    base: [2, 3]  },
+      { name: "회피증가",     type: "evadeup",    base: [3, 4]  },
+      { name: "실드부여",     type: "shield",     base: [20, 24]}
+    ];
     let skillObj = armorSkillPool[rint(0, armorSkillPool.length-1)];
     let scale = armorSkillEffectScale[rarity] || 1;
     let val = rint(skillObj.base[0]*scale, skillObj.base[1]*scale);
     armorSkill = { name: skillObj.name, type: skillObj.type, value: val };
   }
-
   return {
     name: name, rarity: rarity, slot: slot, stat: stat, type: itemType,
     attackType: itemAttackType, skill: skill, skillBase: skillBase, skillBonus: skillBonus,
@@ -349,384 +539,24 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null) {
   };
 }
 
+// ====== 사냥/던전 버튼 동작 ======
+function action(type){
+  // HP가 1일 때는 사냥, 던전 모두 불가
+  if(user.hp <= 1){
+    log("<span class='dead-log'>HP가 1일 때는 전투를 할 수 없습니다! 여관에서 회복하세요.</span>");
+    return;
+  }
+  battle(type);
+}
+function dungeonEnterUI() {
+  log(`<b>[던전 입장]</b><br>
+  <span style="color:#ffd700;">던전에서 죽으면 확률적으로 장비를 잃을 수 있습니다.</span><br><br>
+  <button class="inv-btn" onclick="dungeonAction()">입장하기</button>
+  <button class="inv-btn" onclick="showChar()">취소</button>`);
+}
+function dungeonAction(){ battle("dungeon"); }
 
-function makeUniqueItem(monsterName, slot){
-  const prefix = uniqueMonsterPrefixes[monsterName] || "전설";
-  let baseName = slotTypePool[slot][0].name;
-  let name = `${prefix}의 ${baseName}`;
-  let skill = null;
-  switch(prefix){
-    case "광휘": skill = "빛의 폭발"; break;
-    case "흑섬": skill = "암흑 연쇄"; break;
-    case "수암": skill = "물의 파동"; break;
-    case "토암": skill = "대지 분쇄"; break;
-    default: skill = "전설의 힘";
-  }
-  let stat = [10,5,5,7,3];
-  let atk=15, ratk=0, matk=0;
-  if(slot === "무기") atk = 25;
-  return {
-    name, rarity: "유일", slot, stat, type: baseName,
-    attackType: slot === "무기" ? "근접" : null, skill, enh: 0, ilv: null, unique: true, uniqPrefix: prefix
-  };
-}
-function itemDisplay(item){
-  return `<span class="${rarityColors[item.rarity]}">[${item.rarity}]</span> ${item.name} <span class="equip-bonus">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]} ${item.attackType==="근접"?`ATK:${item.stat[5]}`:""}${item.attackType==="원거리"?`RATK:${item.stat[6]}`:""}${item.attackType==="마법"?`MATK:${item.stat[7]}`:""}</span> ${item.skill?`<span class="equip-bonus">스킬:${item.skill}</span>`:""}${item.armorSkill?` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${typeof item.armorSkill.value === "number" ? item.armorSkill.value.toFixed(1) : item.armorSkill.value})</span>`:""}
-${item.enh?` <span class="enh-lv">+${item.enh}</span>`:""}`;
-}
-
-// 인벤토리, 착용/판매/일괄판매
-function showInv() {
-  let invhtml = "";
-  user.inv.forEach((item,i)=>{
-    invhtml += `<div class="equipitem">${itemDisplay(item)}
-      <button class="inv-btn" onclick="equipItem(${i})">착용</button>
-      <button class="inv-btn" onclick="sellInv(${i})">판매</button></div>`;
-  });
-  if(!invhtml) invhtml="<div style='color:#888'>소지품이 없습니다.</div>";
-  log(`<b>[소지품]</b> (${user.inv.length}/${inventoryLimit})<br>${invhtml}<br>
-    <button class="inv-btn" onclick="sellAllInv()">전체 판매 (착용 제외)</button><br>
-    <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`);
-}
-function sellAllInv(){
-  if(user.inv.length === 0){
-    log("판매할 아이템이 없습니다."); return;
-  }
-  let totalGold = 0;
-  let soldNames = [];
-  let filteredInv = user.inv.filter(item=>{
-    for(let slot of equipSlots){
-      if(user.equip[slot] && user.equip[slot].name === item.name) return false;
-    }
-    return true;
-  });
-  if(filteredInv.length === 0){
-    log("판매할 아이템이 없습니다. (착용 중 아이템 제외)"); return;
-  }
-  filteredInv.forEach(item=>{
-    let idx = user.inv.indexOf(item);
-    if(idx >= 0) user.inv.splice(idx,1);
-    let sellValue = 5 + (rarityBonus(item.rarity) * 10);
-    totalGold += sellValue;
-    soldNames.push(item.name);
-  });
-  user.gold += totalGold;
-  log(`착용 중이 아닌 모든 아이템 판매 완료! 총 ${totalGold}골드를 얻었다.<br>판매한 아이템: ${soldNames.join(", ")}<br><button class="inv-btn" onclick="showInv()">소지품으로 돌아가기</button>`);
-  updateUser();
-}
-function equipItem(idx){
-  let item = user.inv[idx];
-  if(!item || !item.slot || equipSlots.indexOf(item.slot) === -1) return;
-  if(user.equip[item.slot]) addInv(user.equip[item.slot]);
-  user.equip[item.slot]=item;
-  user.inv.splice(idx,1);
-  showInv(); updateUser();
-}
-function sellInv(idx){
-  let item = user.inv[idx];
-  let sellValue = 5 + (rarityBonus(item.rarity) * 10);
-  user.gold += sellValue;
-  user.inv.splice(idx,1);
-  log(`${itemDisplay(item)}<br><span style="color:#ffe55e">${sellValue}G에 판매되었습니다!</span><br><button class="inv-btn" onclick="showInv()">돌아가기</button>`);
-  updateUser();
-}
-function addInv(item){
-  if(user.inv.length>=inventoryLimit){log("소지품이 가득 찼다!"); return false;}
-  user.inv.push(item); return true;
-}
-// 창고
-function showStorage() {
-  if(!user.storage) user.storage = [];
-  let html = `<b>[창고]</b> (${user.storage.length}/100)<br>`;
-  user.storage.forEach((item,i)=>{
-    html += `<div class="equipitem">${itemDisplay(item)}
-      <button class="inv-btn" onclick="moveToInventory(${i})">인벤토리로 이동</button>
-      </div>`;
-  });
-  if(!user.storage.length) html += `<div style='color:#888'>창고에 저장된 아이템이 없습니다.</div>`;
-  html += `<hr><b>[소지품에서 창고로 이동]</b><br>`;
-  user.inv.forEach((item,i)=>{
-    html += `<div class="equipitem">${itemDisplay(item)}
-      <button class="inv-btn" onclick="moveToStorage(${i})">창고로 이동</button>
-      </div>`;
-  });
-  if(!user.inv.length) html += `<div style='color:#888'>소지품에 아이템이 없습니다.</div>`;
-  html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
-  log(html);
-}
-function moveToStorage(idx) {
-  if(user.storage.length >= 100) {
-    log("창고가 가득 찼습니다!"); return;
-  }
-  let item = user.inv[idx];
-  user.storage.push(item);
-  user.inv.splice(idx,1);
-  showStorage();
-  updateUser();
-}
-function moveToInventory(idx) {
-  if(user.inv.length >= inventoryLimit) {
-    log("소지품이 가득 찼습니다!"); return;
-  }
-  let item = user.storage[idx];
-  user.inv.push(item);
-  user.storage.splice(idx,1);
-  showStorage();
-  updateUser();
-}
-// 캐릭터창(기본/장비합산 스탯)
-function showChar() {
-  let baseStats = user.stats.slice();
-  let equipStats = user.stats.slice();
-  let addATK = 0, addRATK = 0, addMATK = 0, addDEF = 0;
-  for (let slot of equipSlots) {
-    let eq = user.equip[slot];
-    if(eq && eq.stat){
-      for(let i=0; i<5; i++){
-        equipStats[i] += eq.stat[i]||0;
-      }
-      addATK += eq.stat[5]||0;
-      addRATK += eq.stat[6]||0;
-      addMATK += eq.stat[7]||0;
-      addDEF += eq.stat[3]||0;
-    }
-  }
-  let totalATK = addATK + equipStats[0];
-  let totalRATK = addRATK + equipStats[1];
-  let totalMATK = addMATK + equipStats[2];
-  let totalDEF = equipStats[3];
-  let statLabel = ["STR(근력)","DEX(민첩)","INT(지능)","VIT(체력)","LUK(운)"];
-  let baseStr = baseStats.map((v,i)=>`${statLabel[i]}: ${v}`).join(" / ");
-  let equipStr = equipStats.map((v,i)=>`${statLabel[i]}: ${v}`).join(" / ");
-  let eqhtml = "";
-  for(let slot of equipSlots){
-    let eq = user.equip[slot];
-    if(eq){
-      eqhtml += `<div><b>${slot}:</b> ${itemDisplay(eq)}
-      <button class="inv-btn" onclick="unequip('${slot}')">해제</button></div>
-      ${eq.skill?`<div class="equip-bonus">스킬: ${eq.skill}</div>`:""}`;
-    } else {
-      eqhtml += `<div><b>${slot}:</b> <span style="color:#888">비어있음</span></div>`;
-    }
-  }
-  let setBonusKey = checkUniqueSetBonus();
-  let setBonusMsg = setBonusKey ? `<br><span class="set-bonus">[${uniqueSetBonus[setBonusKey].name} 세트 효과: ${uniqueSetBonus[setBonusKey].desc}]</span>` : "";
-  log(`<b>[캐릭터]</b><br>
-    <b>레벨:</b> ${user.level} / <b>환생:</b> ${user.rebirth}<br>
-    <b>기본 스탯:</b> ${baseStr}<br>
-    <b>장비 적용:</b> ${equipStr}<br>
-    <b>[공격/방어]</b><br>
-    ATK(근접): <b>${totalATK}</b> / RATK(원거리): <b>${totalRATK}</b> / MATK(마법): <b>${totalMATK}</b> / DEF: <b>${totalDEF}</b><br>
-    <b>HP:</b> ${user.hp}/${user.maxhp}<br>
-    <b>장착장비</b><br>${eqhtml}${setBonusMsg}
-    <br><button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>
-  `);
-}
-function unequip(slot) {
-  if (!user.equip[slot]) return;
-  addInv(user.equip[slot]);
-  user.equip[slot] = undefined;
-  showChar();
-}
-// 마을/상점/강화
-function showTown(){
-  log(`<b>[마을]</b><br>
-    <button class="inv-btn" onclick="innRest()">여관(휴식)</button>
-    <button class="inv-btn" onclick="showShop()">장비상점</button>
-    <button class="inv-btn" onclick="showEnhance()">강화소</button>
-    <button class="inv-btn" onclick="showStorage()">창고</button>
-    <button class="inv-btn" onclick="rebirth()">환생</button>
-    <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`);
-}
-function innRest(){
-  let cost=20+user.level*5;
-  if(user.gold<cost){log("골드가 부족합니다.");return;}
-  user.gold-=cost; user.hp=user.maxhp;
-  log(`여관에서 휴식 후 HP 전부 회복! (${cost}골드 소모)<br><button class='inv-btn' onclick='showTown()'>돌아가기</button>`);
-  updateUser();
-}
-function showShop() {
-  let items = [];
-  for(let i=0;i<5;i++) items.push(makeItem(false, true)); // isShop = true
-  let html = `<div class="shop-title">[장비 상점] (새로고침시 상품 변경, 에픽 등급 이상은 미출현)</div>`;
-  items.forEach((item, idx)=>{
-    html += `<div class="shop-item">${itemDisplay(item)}
-      <button class="inv-btn" onclick="buyShopItem(${idx})">구매 (${50+user.level*8}G)</button></div>`;
-  });
-  html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
-  log(html); window.shopItems = items;
-}
-function buyShopItem(idx) {
-  let item = window.shopItems[idx];
-  let cost = 50 + user.level*8;
-  if(user.gold<cost){log("골드가 부족합니다.");return;}
-  if(user.inv.length>=inventoryLimit){log("소지품이 가득 찼다!");return;}
-  user.gold -= cost;
-  user.inv.push(item);
-  log(`구매 완료!<br>${itemDisplay(item)}<br><button class="inv-btn" onclick="showShop()">상점으로</button>`);
-  updateUser();
-}
-function showEnhance(){
-  let html = `<div class="shop-title">[장비 강화]</div>`;
-  let equips = Object.values(user.equip).filter(e=>e);
-  if(!equips.length){
-    html += `<div style="color:#888">강화할 장비가 없습니다.</div>`;
-  } else {
-    equips.forEach((eq,idx)=>{
-      html += `<div class="shop-item">${itemDisplay(eq)}<button class="enhance-btn" onclick="enhanceItem('${eq.slot}')">강화</button></div>`;
-    });
-  }
-  html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
-  log(html);
-}
-function enhanceItem(slot){
-  let eq = user.equip[slot];
-  if(!eq) return;
-  let lv = eq.enh || 0;
-  if(lv>=20){ log("최대 강화 단계입니다."); return; }
-  let needStone = lv < 5 ? [1,2,4,8,20][lv] : lv < 10 ? 20*Math.pow(2, lv-4) : lv < 15 ? 60*Math.pow(3, lv-9) : 120*Math.pow(4, lv-14);
-  let needGold = 100 + lv * 50;
-  if(user.stones < needStone){ log("강화석이 부족합니다."); return; }
-  if(user.gold < needGold){ log("골드가 부족합니다."); return; }
-  let prob = lv < 4 ? 1 : lv < 10 ? 0.5-(lv-4)*0.08 : lv < 15 ? 0.12-(lv-10)*0.025 : 0.04-(lv-15)*0.007;
-  if(prob < 0.01) prob = 0.01;
-  let succ = Math.random() < prob;
-  user.stones -= needStone;
-  user.gold -= needGold;
-  if(succ){
-    eq.enh = lv + 1;
-    if(eq.slot === "무기") {
-      let atkIndex = 5;
-      if(eq.attackType === "원거리") atkIndex = 6;
-      else if(eq.attackType === "마법") atkIndex = 7;
-      eq.stat[atkIndex] = (eq.stat[atkIndex] || 0) + rint(1,3);
-      log(`<span class="succ-msg">[+${eq.enh} 강화 성공! 주요 공격력이 상승했습니다!]</span> 골드 ${needGold}소모, 강화석 ${needStone}소모`);
-    } else {
-      // ⭐️ 5개 스탯 중 하나가 랜덤하게 오름
-      let statIdx = rint(0,4); // 0~4
-      eq.stat[statIdx] = (eq.stat[statIdx]||0) + rint(1,3);
-      log(`<span class="succ-msg">[+${eq.enh} 강화 성공! 스탯이 랜덤으로 상승했습니다!]</span> 골드 ${needGold}소모, 강화석 ${needStone}소모`);
-    }
-  } else {
-    log(`<span class="fail-msg">[강화 실패] 골드 ${needGold}소모, 강화석 ${needStone}소모</span>`);
-  }
-  updateUser();
-  showEnhance();
-}
-// 세트보너스 체크(유일 전용)
-function checkUniqueSetBonus() {
-  const armorSlots = ["머리", "상의", "하의", "손", "신발"];
-  let found = { 광휘:0, 흑섬:0, 수암:0, 토암:0 };
-  for(let slot of armorSlots){
-    let eq = user.equip[slot];
-    if(eq && eq.rarity === "유일") {
-      let pre = eq.uniqPrefix || (eq.name.split("의")[0]);
-      if(found[pre] !== undefined) found[pre]++;
-    }
-  }
-  for(let key in found) if(found[key] >= 4) return key; // 4셋 보유시 반환
-  return null;
-}
-function triggerArmorSkills(timing, opts) {
-  // opts: {attackDmg, skillAttack, battleLog, userhp, monhp, shieldObj, gotHit, turn, monsterDmg}
-  let anyTriggered = false;
-  for (let slot of equipSlots) {
-    let eq = user.equip[slot];
-    if (eq && eq.armorSkill) {
-      let rarity = eq.rarity || "일반";
-      let trigRate = armorSkillTriggerRate[rarity] || 0.02;
-      if (Math.random() < trigRate) {
-        let v = eq.armorSkill.value;
-        let type = eq.armorSkill.type;
-        let eff = armorSkillLogEffects[type];
-        switch (type) {
-          case "regen":
-            if (timing === "turn") {
-              let heal = Math.max(1, Math.floor(user.maxhp * (v / 100)));
-              opts.userhp.val = Math.min(user.maxhp, opts.userhp.val + heal);
-              opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg(heal)}</span>`);
-              anyTriggered = true;
-            }
-            break;
-          case "leech":
-            if (timing === "attack" && opts.attackDmg > 0) {
-              let leech = Math.max(1, Math.floor(opts.attackDmg * (v / 100)));
-              opts.userhp.val = Math.min(user.maxhp, opts.userhp.val + leech);
-              opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg(leech)}</span>`);
-              anyTriggered = true;
-            }
-            break;
-          case "skillheal":
-            if (timing === "attack" && opts.skillAttack && opts.attackDmg > 0) {
-              let sheal = Math.max(1, Math.floor(opts.attackDmg * (v / 100)));
-              opts.userhp.val = Math.min(user.maxhp, opts.userhp.val + sheal);
-              opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg(sheal)}</span>`);
-              anyTriggered = true;
-            }
-            break;
-          case "dmgreduce":
-            if (timing === "defend") {
-              opts.shieldObj.reducePct += v;
-              opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg(v)}</span>`);
-              anyTriggered = true;
-            }
-            break;
-          case "reflect":
-            if (timing === "defend") {
-              opts.shieldObj.reflectPct += v;
-              opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg(v)}</span>`);
-              anyTriggered = true;
-            }
-            break;
-          case "evadeup":
-            if (timing === "defend") {
-              opts.shieldObj.evadeAdd += v;
-              opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg(v)}</span>`);
-              anyTriggered = true;
-            }
-            break;
-          case "shield":
-            if (timing === "defend" || timing === "turn") {
-              opts.shieldObj.shield += v;
-              opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg(v)}</span>`);
-              anyTriggered = true;
-            }
-            break;
-          case "ignorehit":
-            if (timing === "gotHit" && opts.gotHit) {
-              if (!eq._usedIgnore) {
-                eq._usedIgnore = true;
-                opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg()}</span>`);
-                opts.monsterDmg.val = 0;
-                anyTriggered = true;
-              }
-            }
-            break;
-          case "deathproof":
-            if (timing === "death" && opts.userhp.val <= 0) {
-              if (!eq._usedDeathProof) {
-                eq._usedDeathProof = true;
-                opts.userhp.val = Math.floor(user.maxhp * 0.3);
-                opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg()}</span>`);
-                anyTriggered = true;
-              }
-            }
-            break;
-          case "skillred":
-            if (timing === "defend" && opts.isSkillHit) {
-              opts.shieldObj.skillRed += v;
-              opts.battleLog.push(`<span style="color:${eff.color}">${eff.icon} [${slot}] ${eff.msg(v)}</span>`);
-              anyTriggered = true;
-            }
-            break;
-        }
-      }
-    }
-  }
-  return anyTriggered;
-}
-
-// --- 전투 메인 함수 ---
+// ====== 전투 ======
 function battle(type) {
   let isDungeon = (type === "dungeon");
   let monster = makeMonster(user.level, isDungeon);
@@ -747,43 +577,18 @@ function battle(type) {
   let maxTurn = 10;
   let shieldObj = { reducePct:0, reflectPct:0, evadeAdd:0, shield:0, skillRed:0 };
   let skillTurn = [], finalSkillMsg = "";
-
-  let turn; // turn을 바깥에 선언!
+  let turn;
   for(turn=1; turn<=maxTurn && userhp.val>0 && monhp>0; turn++) {
-    // [1] 턴 시작: 회복/실드/지속형 효과
-    triggerArmorSkills('turn', {battleLog, userhp, monhp, shieldObj});
-    // INT(지력): 턴 시작 회복 (healup 영향)
-    let intChance = Math.min(user.stats[2]/9999 * 0.7, 0.7);
-    if(Math.random() < intChance) {
-      let heal = Math.floor(user.maxhp * 0.2);
-      userhp.val = Math.min(user.maxhp, userhp.val + heal);
-      battleLog.push(`<b>[${turn}턴]</b> <span class="skill-log">✨ [마력 효과] HP ${heal} 회복!</span> (내 HP:${userhp.val})`);
-    }
-
-    // [2] 스턴(흑섬) 효과
-    if(user.stunned && user.stunned > 0) {
-      battleLog.push(`<b>[${turn}턴]</b> <span class="set-bonus">⏳ [흑섬 세트] 적이 스턴 상태로 행동불가!</span>`);
-      user.stunned--;
-    }
-
-    // [3] 턴당 공격 횟수 결정
     let attacksThisTurn = 1;
     if(hasGwanghui) attacksThisTurn += 1;
     let dexChance = Math.min(user.stats[1]/9999 * 0.7, 0.7);
     let dexExtra = (Math.random() < dexChance) ? 1 : 0;
     if(dexExtra) attacksThisTurn += 1;
-
-    // [4] 공격 루프
     for(let atkNum=0; atkNum<attacksThisTurn; atkNum++) {
       let effects = [];
       let dmg = rint(myATK-2, myATK+3);
       let isStrong = (Math.random() < Math.min(user.stats[0]/9999 * 0.7, 0.7));
-      if(isStrong) {
-        dmg = dmg * 2;
-        effects.push(`<span class="skill-log">💥 [힘: 강공격]</span>`);
-      }
-
-      // 무기스킬 확률 발동
+      if(isStrong) { dmg = dmg * 2; effects.push(`<span class="skill-log">💥 [힘: 강공격]</span>`);}
       let isSkill = weapon && weapon.skill && Math.random() < (weapon.skillTrigger||0);
       if(isSkill) {
         dmg = Math.floor(dmg*1.8) + rint(1,5);
@@ -791,94 +596,19 @@ function battle(type) {
         finalSkillMsg = `[스킬 발동] ${weapon.skill}로 강력한 일격!`;
         effects.push(`<span class="skill-log">🔥 [무기스킬: ${weapon.skill}]</span>`);
       }
-
-      // 방어구 스킬: leech/skillheal (확률발동)
-      triggerArmorSkills('attack', {
-        attackDmg: dmg, skillAttack: isSkill, battleLog, userhp, monhp, shieldObj
-      });
-
-      // 흑섬 세트(30% 확률 스턴)
-      if(setBonusKey==="흑섬" && Math.random()<0.3){
-        user.stunned = 1;
-        effects.push(`<span class="set-bonus">⏳ [흑섬 세트: 스턴!]</span>`);
-      }
-
-      let monsterNameDisplay = monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name;
       monhp -= dmg;
       if(monhp < 0) monhp = 0;
-      battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${effects.join(" ")}<span style="font-weight:bold;">${user.name}의 공격!</span> <span class="dmg-log">${monsterNameDisplay}에게 ${dmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
+      battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${effects.join(" ")}<span style="font-weight:bold;">${user.name}의 공격!</span> <span class="dmg-log">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}에게 ${dmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
       if(monhp <= 0) break;
     }
     if(monhp <= 0) break;
-    if(user.stunned && user.stunned > 0) { user.stunned--; continue; }
-
-    // [5] 몬스터 공격 및 방어구 스킬 방어계열 적용
+    // 몬스터 공격
     let monsterDmg = { val: Math.max(1, monster.atk - rint(Math.floor(myDEF/2), myDEF+1)) };
-    triggerArmorSkills('defend', {
-      battleLog, userhp, monhp, shieldObj, isSkillHit: false // 필요시 구현
-    });
-
-    // 실드 적용
-    if (shieldObj.shield > 0) {
-      let absorb = Math.min(shieldObj.shield, monsterDmg.val);
-      shieldObj.shield -= absorb;
-      monsterDmg.val -= absorb;
-      battleLog.push(`<span style="color:#e3ffd8;font-weight:bold;">🛡️ [실드] 피해 ${absorb} 흡수 (잔여 ${shieldObj.shield})</span>`);
-    }
-    // 반사
-    if (shieldObj.reflectPct > 0) {
-      let reflect = Math.floor(monsterDmg.val * (shieldObj.reflectPct / 100));
-      monhp -= reflect;
-      battleLog.push(`<span style="color:#8ef6f2">🪞 [반사] ${reflect} 반사</span>`);
-    }
-    // 피해감소
-    if (shieldObj.reducePct > 0) {
-      monsterDmg.val = Math.max(1, Math.floor(monsterDmg.val * (1-shieldObj.reducePct/100)));
-    }
-    // 스킬피해감소
-    if (shieldObj.skillRed > 0) {
-      monsterDmg.val = Math.max(1, Math.floor(monsterDmg.val * (1-shieldObj.skillRed/100)));
-    }
-    // 회피 확률 (LUK + 방어구 효과)
-    let evadeChance = Math.min(user.stats[4]/9999 * 0.7, 0.7) + (shieldObj.evadeAdd/100);
-    if(Math.random() < evadeChance) {
-      battleLog.push(`<span class="dmg-log">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! → <b>🌀 [회피!]</b> (내 HP:${Math.max(userhp.val,0)})</span>`);
-      continue;
-    }
-    // ignorehit
-    let gotHit = true;
-    triggerArmorSkills('gotHit', {battleLog, userhp, monhp, shieldObj, gotHit, monsterDmg});
-    if(monsterDmg.val <= 0) continue; // 피격 무시 성공
-
-    // 데미지 실제 적용
     userhp.val -= monsterDmg.val;
     battleLog.push(`${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}의 공격! <span class="dmg-log">${user.name}에게 ${monsterDmg.val} 피해</span> (내 HP:${Math.max(userhp.val,0)})`);
-
-    // deathproof
-    triggerArmorSkills('death', {battleLog, userhp, monhp, shieldObj});
-
-    // 토암 세트 부활
-    if(userhp.val<=0 && setBonusKey==="토암" && !rebirthUsed){
-      rebirthUsed = true; userhp.val = Math.floor(user.maxhp*0.5);
-      battleLog.push(`<span class="set-bonus">🪨 [토암 세트: 1회 부활! HP ${userhp.val}로 부활]</span>`);
-    }
-
     if(userhp.val <= 0) { userhp.val = 0; break; }
-    // 효과 변수 리셋 (실드는 누적)
-    shieldObj = { reducePct:0, reflectPct:0, evadeAdd:0, shield:shieldObj.shield, skillRed:0 };
   }
-  turn--; // 마지막 턴값 보정
-
-  // 플래그 초기화(중요!)
-  for (let slot of equipSlots) {
-    let eq = user.equip[slot];
-    if(eq) {
-      delete eq._usedIgnore;
-      delete eq._usedDeathProof;
-    }
-  }
-
-  // [6] 결과 및 보상
+  turn--;
   let win = (monhp<=0 && turn<=maxTurn);
   if(turn>maxTurn) win = false;
   let baseExp = isDungeon ? Math.floor(user.level*4)+rint(16,32) : Math.floor(user.level*1.7)+rint(6,16);
@@ -919,22 +649,6 @@ function battle(type) {
   log(`[${isDungeon?'던전':'사냥'}] <span class="monname">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}</span>과의 턴제 전투 (최대 10턴)<br>` + battleLog.join("<br>") + rewardMsg);
   updateUser();
 }
-function action(type){
-  // HP가 1일 때는 사냥, 던전 모두 입장/실행 불가
-  if(user.hp <= 1){
-    log("<span class='dead-log'>HP가 1일 때는 전투를 할 수 없습니다! 여관에서 회복하세요.</span>");
-    return;
-  }
-  battle(type);
-}
-function dungeonEnterUI() {
-  log(`<b>[던전 입장]</b><br>
-  <span style="color:#ffd700;">던전에서 죽으면 확률적으로 장비를 잃을 수 있습니다.</span><br><br>
-  <button class="inv-btn" onclick="dungeonAction()">입장하기</button>
-  <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">취소</button>`);
-}
-function dungeonAction(){ battle("dungeon"); }
-// 레벨업 및 스탯
 function levelupCheck(){
   while(user.exp>=expNeed(user.level) && user.level<999){
     user.exp -= expNeed(user.level);
@@ -949,20 +663,7 @@ function statRandAdd(stats){
   let idx = rint(0,stats.length-1);
   stats[idx]++;
 }
-// 환생: 장비 착용/창고만 유지, 소지품 초기화
-function rebirth(){
-  if(user.level<999){log("레벨 999 달성 시에만 환생 가능!<br><button class='inv-btn' onclick='showTown()'>돌아가기</button>");return;}
-  if(!confirm("환생 시 레벨/스탯/소지품/골드가 초기화됩니다. 착용장비와 창고는 유지됩니다. 진행할까요?")) return;
-  let keepEquip = {};
-  for(let slot of equipSlots) if(user.equip[slot]) keepEquip[slot] = user.equip[slot];
-  let keepStorage = user.storage||[];
-  user.level=1; user.exp=0; user.gold=100;
-  user.stats=user.stats.map(x=>1+user.rebirth*10);
-  user.statmax=9999; user.rebirth+=1; user.hp=30; user.maxhp=30;
-  user.equip=keepEquip; user.inv=[]; user.stones=0; user.storage = keepStorage;
-  log("환생 완료! 기본 능력치 +10이 부여되었습니다.<br><button class='inv-btn' onclick='showTown()'>돌아가기</button>");
-  updateUser();
-}
 </script>
 </body>
 </html>
+
