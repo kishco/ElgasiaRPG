@@ -382,19 +382,20 @@ let user = null; let saveSlot = 1;
 function rint(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 // 몬스터 생성
 function makeMonster(level, isDungeon = false) {
-  if(isDungeon && Math.random() < 0.01) {
+  if (isDungeon && Math.random() < 0.01) {
     let name = uniqueMonsters[rint(0, uniqueMonsters.length-1)];
-    let hp = Math.floor(40 + level*4 + rint(10,40));
-    let atk = Math.floor(8 + level*2 + rint(5,10));
-    let def = Math.floor(level/6 + rint(2,8));
+    let hp = Math.floor(60 + level*8 + rint(30,80)); // 보스급 몬스터 HP 강화
+    let atk = Math.floor(12 + level*3 + rint(6,15));
+    let def = Math.floor(level/4 + rint(5,15));
     return { name, hp, atk, def, unique: true };
   }
   let prefix = monsterPrefixes[rint(0, monsterPrefixes.length - 1)];
   let nameBase = monsterNames[rint(0, monsterNames.length - 1)];
   let name = prefix + " " + nameBase;
-  let hp = Math.floor(12 + level*2.5 + rint(0,4));
-  let atk = Math.floor(3 + level*0.8 + rint(0,2));
-  let def = Math.floor(level/5 + rint(0,1));
+  let hp = Math.floor(20 + level * 4 + rint(0, 16)); // 일반 몬스터 HP 업
+  let atk = Math.floor(5 + level * 1.3 + rint(1, 4));
+  let def = Math.floor(level/5 + rint(0, 2));
+ if (isDungeon) hp += rint(12, 40) + Math.floor(level * 2.5);
   return { name, hp, atk, def, unique: false };
 }
 // 세이브/불러오기/슬롯삭제
