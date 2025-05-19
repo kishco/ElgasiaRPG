@@ -1118,7 +1118,8 @@ battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${effects.join(" ")}<span 
     if(user.stunned && user.stunned > 0) { user.stunned--; continue; }
 
     // 몬스터 공격
-   let monsterRawDmg = monster.atk;
+let monsterRawDmg = monster.atk + rint(-2, 3); // -2 ~ +3의 랜덤값 더하기
+if (monsterRawDmg < 1) monsterRawDmg = 1; // 1 이하로 떨어지지 않게
 let monsterDmgVal = Math.floor(monsterRawDmg * 100 / (100 + myDEF));
 if (monsterDmgVal < 1) monsterDmgVal = 1;
 let monsterDmg = { val: monsterDmgVal };
