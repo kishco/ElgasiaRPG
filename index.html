@@ -447,14 +447,14 @@ let user = null; let saveSlot = 1;
 function rint(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 // 몬스터 생성
 function makeMonster(level, isDungeon = false) {
-  if (isDungeon && Math.random() < 0.01) {
-    // 유일(보스) 몬스터
-    let name = uniqueMonsters[rint(0, uniqueMonsters.length-1)];
-    let hp = Math.floor(60 + level*8 + rint(30,80)); // 보스급 몬스터 HP 강화
-    let atk = Math.floor(12 + level*3 + rint(6,15));
-    let def = Math.floor(level/4 + rint(5,15));
-    return { name, hp, atk, def, unique: true };
-  }
+if (isDungeon && Math.random() < 0.01) {
+  // 유일(보스) 몬스터 - **하향**
+  let name = uniqueMonsters[rint(0, uniqueMonsters.length-1)];
+  let hp = Math.floor((60 + level*8 + rint(30,80)) * 0.83); // 약 17% 하향
+  let atk = Math.floor((12 + level*3 + rint(6,15)) * 0.85); // 약 15% 하향
+  let def = Math.floor((level/4 + rint(5,15)) * 0.9);       // 약 10% 하향
+  return { name, hp, atk, def, unique: true };
+}
   let prefix = monsterPrefixes[rint(0, monsterPrefixes.length - 1)];
   let nameBase = monsterNames[rint(0, monsterNames.length - 1)];
   let name = prefix + " " + nameBase;
