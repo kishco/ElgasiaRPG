@@ -14,25 +14,37 @@
     .equip-legend { color: gold; } .equip-myth { color: #fa4242; font-weight: bold;}
     .equip-normal { color: #fff;}
     .log { border: 1px solid #222; background: #191934; margin: 16px 0; border-radius: 10px; min-height: 120px; padding: 14px; font-size:17px;}
-    .inv-btn { margin-left: 8px; background: #384085; color: #fff; border: none; border-radius: 5px; padding: 2px 9px; font-size: 14px;}
+   .inv-btn {
+  min-width: 74px;
+  text-align: center;
+  margin-right: 5px;
+}
     .inv-btn:disabled { color: #888;}
 .equipitem {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 6px 10px;
-  margin-bottom: 4px;
-  max-width: 100%;
-  word-break: break-all;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 3px 0 2px 0;
+  margin: 2px 0;
+  border-bottom: 1px solid #29293f;
+  white-space: nowrap;
 }
-.equipitem .inv-btn, .equipitem .enhance-btn {
-  margin: 0 2px;
-  min-width: 52px;
-  flex-shrink: 0;
+.item-btns {
+  display: flex;
+  gap: 6px;
+  margin-left: 12px;
 }
-.equipitem span, .equipitem b {
-  white-space: normal;
-  max-width: 72vw;
+.equipitem .item-btns {
+  display: flex;
+  gap: 6px;
+  margin-left: 12px;
+}
+.equip-bonus, .stat-label {
+  color: #aaffb8;
+  margin-left: 10px;
+  font-size: 13px;
+  font-weight: 400;
 }
     .equip-bonus {font-size:14px;color:#b8ffad;}
     .namebox input { font-size:18px; padding:3px 8px; border-radius:7px; border:1px solid #555;}
@@ -44,7 +56,7 @@
     .enhance-btn { background: #1f8e26; color: #fff; margin-left:12px; border-radius:6px;}
     .fail-msg { color:#ff6161; font-weight:bold; }
     .succ-msg { color:#8aff8a; font-weight:bold; }
-    .enh-lv { color:#e7e553; font-weight:bold;}
+    .enh-lv {color: #ffe161; font-weight: bold; margin-left: 6px;}
     .monname { color:#ffd700; font-weight:bold;}
     .save-del-btn { background:#a23c3c; color:#fff; border-radius:7px; border:none; font-size:14px; padding:4px 14px; margin-left:8px;}
     .ilv-txt { color:#9ed1f7; font-weight:bold; margin-right:8px; }
@@ -174,16 +186,12 @@
   color: #ffe161;
   font-weight: 700;
 }
-.inv-btn {
-  margin-left: 8px;
-  background: #4751a8;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 3px 12px;
-  font-size: 15px;
-  font-weight: 600;
-  transition: background 0.18s;
+.inv-btn, .enhance-btn {
+  font-size: 13px;
+  padding: 4px 16px;
+  min-width: 42px;
+  margin: 0 0 0 5px;
+  border-radius: 9px;
 }
 .inv-btn:hover { background: #697af3; }
 .inv-btn:disabled { color: #888; }
@@ -280,6 +288,14 @@ body, input, button {
 .equipstat-flex b {
   color: #ffe161;
   font-weight: 700;
+}
+.stat-head {
+  font-size: 17px;
+  color: #ffe161;
+  font-family: 'Malgun Gothic', 'Noto Sans KR', 'Pretendard', sans-serif;
+  margin-bottom: 6px;
+  letter-spacing: 0.07em;
+  font-weight: 600;
 }
 </style>
 </head>
@@ -670,21 +686,40 @@ function makeUniqueItem(monsterName, slot){
   };
 }
 function itemDisplay(item){
-  return `<span class="${rarityColors[item.rarity]}">[${item.rarity}]</span> ${item.name} <span class="equip-bonus">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]} ${item.attackType==="근접"?`ATK:${item.stat[5]}`:""}${item.attackType==="원거리"?`RATK:${item.stat[6]}`:""}${item.attackType==="마법"?`MATK:${item.stat[7]}`:""}</span> ${item.skill?`<span class="equip-bonus">스킬:${item.skill}</span>`:""}${item.armorSkill?` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${typeof item.armorSkill.value === "number" ? item.armorSkill.value.toFixed(1) : item.armorSkill.value})</span>`:""}
-${item.enh?` <span class="enh-lv">+${item.enh}</span>`:""}`;
+  // 첫줄: 등급(색상) + 이름 굵게 (크게)
+  let txt = `<div style="display:flex;align-items:center;">
+      <span class="${rarityColors[item.rarity]}" style="font-size:16px;margin-right:7px;min-width:68px;text-align:center;">[${item.rarity}]</span>
+      <span style="font-weight:700;font-size:16px;">${item.name}</span>
+    </div>`;
+
+  // 둘째줄: 스탯 및 추가 효과 (작은 글씨)
+  txt += `<div style="margin-left:10px;margin-top:1px;font-size:14px;">`;
+  txt += `<span class="stat-label">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]}</span>`;
+  if (item.attackType === "근접")   txt += ` <span class="equip-bonus">ATK:${item.stat[5]}</span>`;
+  if (item.attackType === "원거리") txt += ` <span class="equip-bonus">RATK:${item.stat[6]}</span>`;
+  if (item.attackType === "마법")    txt += ` <span class="equip-bonus">MATK:${item.stat[7]}</span>`;
+  if (item.skill)      txt += ` <span class="equip-bonus">스킬:${item.skill}</span>`;
+  if (item.armorSkill) txt += ` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${item.armorSkill.value})</span>`;
+  if (item.enh)        txt += ` <span class="enh-lv">+${item.enh}</span>`;
+  txt += `</div>`;
+  return txt;
 }
 
 // 인벤토리, 착용/판매/일괄판매
 function showInv() {
   let invhtml = "";
-  user.inv.forEach((item,i)=>{
-    invhtml += `<div class="equipitem">${itemDisplay(item)}
-      <button class="inv-btn" onclick="equipItem(${i})">착용</button>
-      <button class="inv-btn" onclick="sellInv(${i})">판매</button></div>`;
+  user.inv.forEach((item, i) => {
+invhtml += `<div class="equipitem">
+  <span>${itemDisplay(item)}</span>
+  <div class="item-btns">
+    <button class="inv-btn" onclick="equipItem(${i})">착용</button>
+    <button class="inv-btn" onclick="sellInv(${i})">판매</button>
+  </div>
+</div>`;
   });
-  if(!invhtml) invhtml="<div style='color:#888'>소지품이 없습니다.</div>";
+  if (!invhtml) invhtml = "<div style='color:#888'>소지품이 없습니다.</div>";
   log(`<b>[소지품]</b> (${user.inv.length}/${inventoryLimit})<br>${invhtml}<br>
-    <button class="inv-btn" onclick="sellAllInv()">전체 판매 (착용 제외)</button><br>
+    <button class="inv-btn" onclick="sellAllInv()">전체 판매 (착용 제외)</button>
     <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`);
 }
 function sellAllInv(){
@@ -735,21 +770,21 @@ function addInv(item){
 }
 // 창고
 function showStorage() {
-  if(!user.storage) user.storage = [];
   let html = `<b>[창고]</b> (${user.storage.length}/100)<br>`;
-  user.storage.forEach((item,i)=>{
-    html += `<div class="equipitem">${itemDisplay(item)}
-      <button class="inv-btn" onclick="moveToInventory(${i})">인벤토리로 이동</button>
-      </div>`;
-  });
   if(!user.storage.length) html += `<div style='color:#888'>창고에 저장된 아이템이 없습니다.</div>`;
+  user.storage.forEach((item, i) => {
+    html += `<div class="equipitem">${itemDisplay(item)}
+      <div class="item-btns">
+        <button class="inv-btn" onclick="moveToInventory(${i})">소지품으로</button>
+      </div></div>`;
+  });
   html += `<hr><b>[소지품에서 창고로 이동]</b><br>`;
+  if(!user.inv.length) html += `<div style='color:#888'>소지품에 아이템이 없습니다.</div>`;
   user.inv.forEach((item,i)=>{
     html += `<div class="equipitem">${itemDisplay(item)}
       <button class="inv-btn" onclick="moveToStorage(${i})">창고로 이동</button>
       </div>`;
   });
-  if(!user.inv.length) html += `<div style='color:#888'>소지품에 아이템이 없습니다.</div>`;
   html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
   log(html);
 }
@@ -797,35 +832,37 @@ function showChar() {
   let statLabel = ["STR(근력)","DEX(민첩)","INT(지능)","VIT(체력)","LUK(운)"];
   let baseStr = baseStats.map((v,i)=>`${statLabel[i]}: ${v}`).join(" / ");
   let equipStr = equipStats.map((v,i)=>`${statLabel[i]}: ${v}`).join(" / ");
-  let eqhtml = "";
-  for(let slot of equipSlots){
+
+let html = `<b>[캐릭터]</b><br>
+<div class="stat-head">Lv.${user.level} / 경험치: ${user.exp} / HP: ${user.hp}/${user.maxhp} / 골드: ${user.gold} / 강화석: ${user.stones||0}</div>
+<b>기본 스탯</b><br>${baseStr}<br>
+<b>장비합산 스탯</b><br>${equipStr}<br>
+<b>공격/방어력</b><br>ATK: ${totalATK} / RATK: ${totalRATK} / MATK: ${totalMATK} / DEF: ${totalDEF}<br><br>
+<b>장착 장비</b><br>`;
+
+  // 장착 장비도 인벤토리처럼 동일하게 출력
+  for(let slot of equipSlots) {
     let eq = user.equip[slot];
-    if(eq){
-      eqhtml += `<div><b>${slot}:</b> ${itemDisplay(eq)}
-      <button class="inv-btn" onclick="unequip('${slot}')">해제</button></div>
-      ${eq.skill?`<div class="equip-bonus">스킬: ${eq.skill}</div>`:""}`;
+    html += `<div class="equipitem">`;
+    if (eq) {
+      html += `
+        <span>${itemDisplay(eq)}</span>
+        <div class="item-btns">
+          <button class="inv-btn" onclick="unequip('${slot}')">해제</button>
+        </div>
+      `;
     } else {
-      eqhtml += `<div><b>${slot}:</b> <span style="color:#888">비어있음</span></div>`;
+      html += `<span style="color:#888">[${slot}] 비어있음</span>`;
     }
+    html += `</div>`;
   }
+
   let setBonusKey = checkUniqueSetBonus();
   let setBonusMsg = setBonusKey ? `<br><span class="set-bonus">[${uniqueSetBonus[setBonusKey].name} 세트 효과: ${uniqueSetBonus[setBonusKey].desc}]</span>` : "";
-  log(`<b>[캐릭터]</b><br>
-    <b>레벨:</b> ${user.level} / <b>환생:</b> ${user.rebirth}<br>
-    <b>기본 스탯:</b> ${baseStr}<br>
-    <b>장비 적용:</b> ${equipStr}<br>
-    <b>[공격/방어]</b><br>
-    ATK(근접): <b>${totalATK}</b> / RATK(원거리): <b>${totalRATK}</b> / MATK(마법): <b>${totalMATK}</b> / DEF: <b>${totalDEF}</b><br>
-    <b>HP:</b> ${user.hp}/${user.maxhp}<br>
-    <b>장착장비</b><br>${eqhtml}${setBonusMsg}
-    <br><button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>
-  `);
-}
-function unequip(slot) {
-  if (!user.equip[slot]) return;
-  addInv(user.equip[slot]);
-  user.equip[slot] = undefined;
-  showChar();
+  html += setBonusMsg;
+  html += `<br><button class="inv-btn" onclick="showInv()">소지품</button>
+  <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`;
+  log(html);
 }
 
 function showGacha() {
@@ -859,9 +896,11 @@ function showShop() {
   let items = [];
   for(let i=0;i<5;i++) items.push(makeItem(false, true)); // isShop = true
   let html = `<div class="shop-title">[장비 상점] (새로고침시 상품 변경, 에픽 등급 이상은 미출현)</div>`;
-  items.forEach((item, idx)=>{
-    html += `<div class="shop-item">${itemDisplay(item)}
-      <button class="inv-btn" onclick="buyShopItem(${idx})">구매 (${50+user.level*8}G)</button></div>`;
+  items.forEach((item, idx) => {
+    html += `<div class="equipitem">${itemDisplay(item)}
+      <div class="item-btns">
+        <button class="inv-btn" onclick="buyShopItem(${idx})">구매 (${50+user.level*8}G)</button>
+      </div></div>`;
   });
   html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
   log(html); window.shopItems = items;
@@ -876,14 +915,17 @@ function buyShopItem(idx) {
   log(`구매 완료!<br>${itemDisplay(item)}<br><button class="inv-btn" onclick="showShop()">상점으로</button>`);
   updateUser();
 }
-function showEnhance(){
+function showEnhance() {
   let html = `<div class="shop-title">[장비 강화]</div>`;
-  let equips = Object.values(user.equip).filter(e=>e);
-  if(!equips.length){
+  let equips = Object.values(user.equip).filter(e => e);
+  if (!equips.length) {
     html += `<div style="color:#888">강화할 장비가 없습니다.</div>`;
   } else {
-    equips.forEach((eq,idx)=>{
-      html += `<div class="shop-item">${itemDisplay(eq)}<button class="enhance-btn" onclick="enhanceItem('${eq.slot}')">강화</button></div>`;
+    equips.forEach((eq, idx) => {
+      html += `<div class="equipitem">${itemDisplay(eq)}
+        <div class="item-btns">
+          <button class="enhance-btn" onclick="enhanceItem('${eq.slot}')">강화</button>
+        </div></div>`;
     });
   }
   html += `<br><button class="inv-btn" onclick="showTown()">돌아가기</button>`;
