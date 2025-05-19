@@ -30,6 +30,28 @@
   border-bottom: 1px solid #29293f;
   white-space: nowrap;
 }
+.equipitem.combine2row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #29293f;
+  padding-bottom: 7px;
+  padding-top: 7px;
+}
+.combine-itembox {
+  width: 100%;
+  margin-bottom: 2px;
+}
+.combine-itembox:last-of-type {
+  margin-bottom: 5px;
+}
+.combine-btnbox {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 3px;
+}
 .item-btns {
   display: flex;
   gap: 6px;
@@ -339,6 +361,13 @@ const armorSkillEffectScale = {
   "레전더리": 2,
   "유일":     3
 };
+const combineRates = { "레어": 0.33, "유니크": 0.20, "에픽": 0.10 };
+function combineCost(rarity, level) {
+  let base = 1000 + level * 30;
+  if (rarity === "유니크") base += 2000;
+  if (rarity === "에픽") base += 5000;
+  return base;
+}
 const armorSkillPool = [
   { name: "생명회복",     type: "regen",      base: [1, 2]  },  // 턴마다 %회복
   { name: "피해흡혈",     type: "leech",      base: [1, 2]  },  // 피해의 % 흡수
@@ -685,6 +714,17 @@ function makeUniqueItem(monsterName, slot){
     attackType: slot === "무기" ? "근접" : null, skill, enh: 0, ilv: null, unique: true, uniqPrefix: prefix
   };
 }
+function unequip(slot) {
+  if (!user.equip[slot]) return;
+  if (user.inv.length >= inventoryLimit) {
+    log("소지품이 가득 찼다!"); return;
+  }
+  let item = user.equip[slot];
+  user.inv.push(item);        // 인벤토리에 추가
+  user.equip[slot] = undefined; // 장착 해제
+  showChar(); // 캐릭터창 새로고침
+  updateUser();
+}
 function itemDisplay(item){
   // 첫줄: 등급(색상) + 이름 굵게 (크게)
   let txt = `<div style="display:flex;align-items:center;">
@@ -718,9 +758,85 @@ invhtml += `<div class="equipitem">
 </div>`;
   });
   if (!invhtml) invhtml = "<div style='color:#888'>소지품이 없습니다.</div>";
-  log(`<b>[소지품]</b> (${user.inv.length}/${inventoryLimit})<br>${invhtml}<br>
-    <button class="inv-btn" onclick="sellAllInv()">전체 판매 (착용 제외)</button>
-    <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`);
+log(`<b>[소지품]</b> (${user.inv.length}/${inventoryLimit})<br>${invhtml}<br>
+  <button class="inv-btn" onclick="showCombineUI()">아이템 합성</button>
+  <button class="inv-btn" onclick="sellAllInv()">전체 판매 (착용 제외)</button>
+  <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`);
+}
+function showCombineUI() {
+  let html = `<b>[아이템 합성]</b><br>
+  <span style="color:#ffe161">동일 등급/부위 아이템 2개를 조합해 상위 등급을 얻을 수 있습니다.<br>
+  (유일 등급은 조합 불가, 실패 시 재료 소멸!)</span><br><br>`;
+
+  let valid = ["레어", "유니크", "에픽"];
+  let found = false;
+
+  valid.forEach(rarity => {
+    // 인벤토리 실제 인덱스와 함께 후보 추출
+    let candidates = user.inv
+      .map((it, idx) => ({ ...it, _invIdx: idx }))
+      .filter(it => it.rarity === rarity && !it.unique);
+    if (candidates.length >= 2) {
+      found = true;
+      html += `<b>${rarity} (${candidates.length}개)</b><br>`;
+      for (let i = 0; i < candidates.length; i++) {
+        for (let j = i + 1; j < candidates.length; j++) {
+          if (candidates[i].slot !== candidates[j].slot) continue;
+          let cost = combineCost(rarity, user.level);
+html += `
+  <div class="equipitem combine2row">
+    <div class="combine-itembox">${itemDisplay(candidates[i])}</div>
+    <div style="font-size:16px;font-weight:bold;text-align:center;margin:4px 0 4px 0;">+</div>
+    <div class="combine-itembox">${itemDisplay(candidates[j])}</div>
+    <div class="combine-btnbox">
+      <button class="inv-btn"
+        onclick="combineItem('${rarity}',${candidates[i]._invIdx},${candidates[j]._invIdx})">
+        합성 (${cost}G, ${Math.round(combineRates[rarity] * 100)}%)
+      </button>
+    </div>
+  </div>
+`;
+        }
+      }
+    }
+  });
+
+  if (!found) {
+    html += `<div style='color:#888'>합성 가능한 아이템(동일 등급/부위 2개)이 없습니다.</div>`;
+  }
+
+  html += `<br><button class="inv-btn" onclick="showInv()">돌아가기</button>`;
+  log(html);
+}
+
+function combineItem(rarity, idx1, idx2) {
+  if (idx1 === idx2) { log('합성 오류: 같은 아이템입니다.'); return; }
+  let item1 = user.inv[idx1];
+  let item2 = user.inv[idx2];
+  if (!item1 || !item2 || item1.rarity !== rarity || item2.rarity !== rarity || item1.unique || item2.unique) {
+    log('같은 등급의 일반 아이템 2개가 필요합니다.'); return;
+  }
+  if (item1.slot !== item2.slot) { log('같은 부위의 아이템 2개가 필요합니다.'); return; }
+  let cost = combineCost(rarity, user.level);
+  if (user.gold < cost) { log('골드가 부족합니다.'); return; }
+  user.gold -= cost;
+  let [idxA, idxB] = idx1 > idx2 ? [idx1, idx2] : [idx2, idx1]; // 높은 인덱스 먼저
+  user.inv.splice(idxA, 1);
+  user.inv.splice(idxB, 1);
+  if (Math.random() < combineRates[rarity]) {
+    let nextRarity = rarity === "레어" ? "유니크" : rarity === "유니크" ? "에픽" : "레전더리";
+    let newItem = makeItem(false, false, null, nextRarity);
+    newItem.slot = item1.slot; // 동일 슬롯 유지
+    addInv(newItem);
+    log(`<b>합성 성공!</b> [${rarity} 2개] → [${nextRarity} 1개]<br>${itemDisplay(newItem)}<br>
+      <button class="inv-btn" onclick="showCombineUI()">다시 합성</button>
+      <button class="inv-btn" onclick="showInv()">소지품</button>`);
+  } else {
+    log(`<span class="dead-log">합성 실패! 재료 아이템 2개 모두 소멸...</span><br>
+      <button class="inv-btn" onclick="showCombineUI()">다시 합성</button>
+      <button class="inv-btn" onclick="showInv()">소지품</button>`);
+  }
+  updateUser();
 }
 function sellAllInv(){
   if(user.inv.length === 0){
@@ -740,7 +856,7 @@ function sellAllInv(){
   filteredInv.forEach(item=>{
     let idx = user.inv.indexOf(item);
     if(idx >= 0) user.inv.splice(idx,1);
-    let sellValue = 5 + (rarityBonus(item.rarity) * 10);
+    let sellValue = 5 + (rarityBonus(item.rarity) * 35);
     totalGold += sellValue;
     soldNames.push(item.name);
   });
@@ -758,7 +874,7 @@ function equipItem(idx){
 }
 function sellInv(idx){
   let item = user.inv[idx];
-  let sellValue = 5 + (rarityBonus(item.rarity) * 10);
+  let sellValue = (10 + user.level * 2) + (rarityBonus(item.rarity) * (40 + user.level * 3));
   user.gold += sellValue;
   user.inv.splice(idx,1);
   log(`${itemDisplay(item)}<br><span style="color:#ffe55e">${sellValue}G에 판매되었습니다!</span><br><button class="inv-btn" onclick="showInv()">돌아가기</button>`);
