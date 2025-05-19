@@ -853,13 +853,14 @@ function sellAllInv(){
   if(filteredInv.length === 0){
     log("판매할 아이템이 없습니다. (착용 중 아이템 제외)"); return;
   }
-  filteredInv.forEach(item=>{
-    let idx = user.inv.indexOf(item);
-    if(idx >= 0) user.inv.splice(idx,1);
-    let sellValue = 5 + (rarityBonus(item.rarity) * 35);
-    totalGold += sellValue;
-    soldNames.push(item.name);
-  });
+filteredInv.forEach(item=>{
+  let idx = user.inv.indexOf(item);
+  if(idx >= 0) user.inv.splice(idx,1);
+  // 아래 공식으로 교체 (개별 판매와 동일하게)
+  let sellValue = (10 + user.level * 2) + (rarityBonus(item.rarity) * (40 + user.level * 3));
+  totalGold += sellValue;
+  soldNames.push(item.name);
+});
   user.gold += totalGold;
   log(`착용 중이 아닌 모든 아이템 판매 완료! 총 ${totalGold}골드를 얻었다.<br>판매한 아이템: ${soldNames.join(", ")}<br><button class="inv-btn" onclick="showInv()">소지품으로 돌아가기</button>`);
   updateUser();
