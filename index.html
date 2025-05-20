@@ -10,9 +10,46 @@
     .stat-box span { display: inline-block; margin-right: 18px; font-size: 18px; }
     .btn-bar button { background: #384085; color: #fff; border: none; border-radius: 7px; margin: 4px; padding: 10px 20px; font-size: 17px; cursor: pointer; transition: background 0.15s;}
     .btn-bar button:disabled { background: #333; color: #aaa; cursor: not-allowed; }
-    .equip-rare { color: #51cafc; } .equip-unique { color: #d76bff; } .equip-epic { color: #ff90b5; }
-    .equip-legend { color: gold; } .equip-myth { color: #fa4242; font-weight: bold;}
+    .equip-rare { color: #51cafc; } .equip-unique { color: #d76bff; }
     .equip-normal { color: #fff;}
+.equip-epic {
+  color: #ff90b5;
+  font-weight: bold;
+  text-shadow:
+    0 0 7px #ff90b5,
+    0 0 14px #f080c1;
+}
+.equip-legend {
+  color: gold;
+  font-weight: bold;
+  text-shadow:
+    0 0 6px #ffe161,
+    0 0 20px #ffe161;
+}
+.equip-myth {
+  color: #b366ff;
+  font-weight: bold;
+  text-shadow:
+    0 0 7px #d76bff,
+    0 0 18px #a559f3;
+}
+.equip-inferno {
+  color: #ff2424;
+  font-weight: bold;
+  font-size: 18px;
+  letter-spacing: 1.3px;
+  text-shadow:
+    0 0 6px #fa2525,
+    0 0 16px #ff2323,
+    0 0 24px #ff3939,
+    0 0 42px #ff6868;
+  filter: brightness(1.22) drop-shadow(0 0 5px #ff6464);
+  animation: doomglow 1.2s infinite alternate;
+}
+@keyframes doomglow {
+  from { text-shadow: 0 0 10px #ff2323, 0 0 35px #ff6d6d; }
+  to   { text-shadow: 0 0 22px #ff5656, 0 0 55px #ff2323; }
+}
     .log { border: 1px solid #222; background: #191934; margin: 16px 0; border-radius: 10px; min-height: 120px; padding: 14px; font-size:17px;}
    .inv-btn {
   min-width: 74px;
@@ -68,6 +105,7 @@
   font-size: 13px;
   font-weight: 400;
 }
+
     .equip-bonus {font-size:14px;color:#b8ffad;}
     .namebox input { font-size:18px; padding:3px 8px; border-radius:7px; border:1px solid #555;}
     .save-bar button { background: #515b9d; color: #fff; border: none; border-radius: 6px; margin: 2px; padding: 7px 15px; font-size: 15px;}
@@ -333,6 +371,7 @@ body, input, button {
       <div class="btn-bar" id="menubar" style="display:none">
         <button onclick="action('hunt')">사냥</button>
         <button onclick="dungeonEnterUI()">던전</button>
+        <button onclick="showExploreMain()" id="btn_explore">탐험</button>
         <button onclick="showChar()">캐릭터</button>
         <button onclick="showInv()">소지품</button>
         <button onclick="showTown()">마을</button>
@@ -393,10 +432,10 @@ const statNames = ["STR", "DEX", "INT", "VIT", "LUK"];
 const equipSlots = ["머리", "상의", "하의", "손", "신발", "무기", "방패"];
 const prefixes = ["불타는", "신속한", "고대의", "빛나는", "강인한", "재빠른", "현자의", "암흑의", "단단한", "용맹한"];
 const suffixes = ["광기", "지혜", "속도", "행운", "힘", "수호", "파멸", "마법", "불멸", "용기"];
-const rarityOrder = ["일반","레어","유니크","에픽","레전더리","유일"];
-const rarityColors = { "일반":"equip-normal", "레어":"equip-rare", "유니크":"equip-unique", "에픽":"equip-epic", "레전더리":"equip-legend", "유일":"equip-myth" };
-const rarityRate = [60,20,5,1,0.01,0];
-const dungeonRate = [45,25,10,6,1,0.1];
+const rarityOrder = ["일반","레어","유니크","에픽","레전더리","유일","지옥"];
+const rarityColors = { "일반":"equip-normal", "레어":"equip-rare", "유니크":"equip-unique", "에픽":"equip-epic", "레전더리":"equip-legend", "유일":"equip-myth","지옥":"equip-inferno" };
+const rarityRate   = [60, 20, 5, 1, 0.01, 0,0];
+const dungeonRate = [45,25,10,6,1,0.1,0];
 const inventoryLimit = 40;
 const skillTriggerRate = { "일반": 0.02, "레어": 0.04, "유니크": 0.07, "에픽": 0.10, "레전더리": 0.15, "유일": 0.33 };
 const skillGiveRate = { "일반": 0.02, "레어": 0.06, "유니크": 0.10, "에픽": 0.18, "레전더리": 0.25, "유일": 1.0 };
@@ -616,7 +655,7 @@ function rarityBonus(r){
   return 0;
 }
 // ---- 아이템 생성 (스킬 확률 및 유일 세트/스킬)
-function makeItem(allowMyth, isShop, uniqueMonsterName = null, rarityOverride = null) {
+function makeItem(allowMyth, isShop, uniqueMonsterName = null, rarityOverride = null, allowInferno = false) {
   let rate = allowMyth ? dungeonRate : rarityRate;
   let localRarityOrder = isShop ? ["일반","레어","유니크"] : rarityOrder;
   let localRate = isShop ? [70,25,5] : rate;
@@ -626,13 +665,51 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null, rarityOverride = 
   if(!uniqueMonsterName && rarity === "유일") rarity = "레전더리";
   if(uniqueMonsterName) rarity = "유일";
   if (rarityOverride) rarity = rarityOverride;
+
   let slot = equipSlots[rint(0, equipSlots.length-1)];
   let pool = slotTypePool[slot];
   let baseObj = pool[rint(0, pool.length-1)];
   let itemType = baseObj.name;
   let itemAttackType = baseObj.type || null;
 
-  // 유일 아이템(이름/스탯/스킬 규칙 적용)
+  // ★★★★★ 지옥 등급 (파멸의) 분기 ★★★★★
+  if(rarity === "지옥") {
+    let isWeapon = (slot === "무기");
+    let isArmor = ["머리","상의","하의","손","신발"].includes(slot);
+    let name = `파멸의 ${itemType}`;
+    let sconf = itemStatTable["유일"];
+    // 스탯: 유일의 87~92%로
+    let stat = [];
+    for(let i=0;i<5;i++) stat.push(rint(Math.floor(sconf.base[0]*0.87), Math.floor(sconf.base[1]*0.92)));
+    let atk = itemAttackType === "근접" ? rint(Math.floor(sconf.atk[0]*0.87), Math.floor(sconf.atk[1]*0.92)) : 0;
+    let ratk= itemAttackType === "원거리"? rint(Math.floor(sconf.atk[0]*0.87), Math.floor(sconf.atk[1]*0.92)) : 0;
+    let matk= itemAttackType === "마법"  ? rint(Math.floor(sconf.atk[0]*0.87), Math.floor(sconf.atk[1]*0.92)) : 0;
+    stat.push(atk); stat.push(ratk); stat.push(matk);
+
+    let skill = null, special = null, armorSkill = null;
+    if (isWeapon) {
+      // 무기스킬 1개
+      if (itemAttackType && skillPool[itemAttackType])
+        skill = skillPool[itemAttackType][rint(0, skillPool[itemAttackType].length-1)];
+      // 특수효과 3종 고정
+      special = [
+        { type: "strongAtkUp", val: 25 },
+        { type: "doubleHit",   val: 15 },
+        { type: "ignoreDef",   val: 25 }
+      ];
+    } else if (isArmor) {
+      // 방어구 스킬 1개 (유일보다 약간 약하게)
+      let skillObj = armorSkillPool[rint(0, armorSkillPool.length-1)];
+      let scale = 2.1; // 유일(3)에 비해 소폭 하향
+      let val = rint(skillObj.base[0]*scale, skillObj.base[1]*scale);
+      armorSkill = { name: skillObj.name, type: skillObj.type, value: val };
+    }
+    return {
+      name, rarity: "지옥", slot, stat, type: itemType,
+      attackType: itemAttackType, skill, enh: 0, ilv: null, unique: false, special, armorSkill
+    };
+  }
+  // ★★★★★ 유일 아이템 (유일 몬스터 드랍) ★★★★★
   if(rarity === "유일" && uniqueMonsterName) {
     let uniqPrefix = uniqueMonsterPrefixes[uniqueMonsterName] || "유일";
     let baseName = baseObj.name;
@@ -653,7 +730,7 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null, rarityOverride = 
     };
   }
 
-  // 일반~레전더리 아이템
+  // ★★★★★ 일반~레전더리 아이템 ★★★★★
   let prefix = prefixes[rint(0,prefixes.length-1)];
   let suffix = suffixes[rint(0,suffixes.length-1)];
   let name = `${prefix} ${suffix}의 ${itemType}`;
@@ -692,8 +769,6 @@ function makeItem(allowMyth, isShop, uniqueMonsterName = null, rarityOverride = 
     skillTrigger: trigger, enh: 0, ilv: null, unique: false, armorSkill
   };
 }
-
-
 function makeUniqueItem(monsterName, slot){
   const prefix = uniqueMonsterPrefixes[monsterName] || "전설";
   let baseName = slotTypePool[slot][0].name;
@@ -726,20 +801,24 @@ function unequip(slot) {
   updateUser();
 }
 function itemDisplay(item){
-  // 첫줄: 등급(색상) + 이름 굵게 (크게)
   let txt = `<div style="display:flex;align-items:center;">
       <span class="${rarityColors[item.rarity]}" style="font-size:16px;margin-right:7px;min-width:68px;text-align:center;">[${item.rarity}]</span>
       <span style="font-weight:700;font-size:16px;">${item.name}</span>
     </div>`;
 
-  // 둘째줄: 스탯 및 추가 효과 (작은 글씨)
   txt += `<div style="margin-left:10px;margin-top:1px;font-size:14px;">`;
   txt += `<span class="stat-label">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]}</span>`;
   if (item.attackType === "근접")   txt += ` <span class="equip-bonus">ATK:${item.stat[5]}</span>`;
   if (item.attackType === "원거리") txt += ` <span class="equip-bonus">RATK:${item.stat[6]}</span>`;
-  if (item.attackType === "마법")    txt += ` <span class="equip-bonus">MATK:${item.stat[7]}</span>`;
+  if (item.attackType === "마법")   txt += ` <span class="equip-bonus">MATK:${item.stat[7]}</span>`;
   if (item.skill)      txt += ` <span class="equip-bonus">스킬:${item.skill}</span>`;
   if (item.armorSkill) txt += ` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${item.armorSkill.value})</span>`;
+  // ★★★ 지옥 무기 특수효과 표시
+  if (item.special)    txt += ` <span class="equip-bonus">특수효과: ${item.special.map(s=>({
+    "strongAtkUp":"강공격확률+25%",
+    "doubleHit":"추가공격+15%",
+    "ignoreDef":"방어무시+25%"
+  }[s.type])).join(", ")}</span>`;
   if (item.enh)        txt += ` <span class="enh-lv">+${item.enh}</span>`;
   txt += `</div>`;
   return txt;
@@ -954,7 +1033,7 @@ function showChar() {
   let equipStr = equipStats.map((v,i)=>`${statLabel[i]}: ${v}`).join(" / ");
 
 let html = `<b>[캐릭터]</b><br>
-<div class="stat-head">Lv.${user.level} / 경험치: ${user.exp} / HP: ${user.hp}/${user.maxhp} / 골드: ${user.gold} / 강화석: ${user.stones||0}</div>
+<div class="stat-head"> Lv.${user.level} / 환생: ${user.rebirth||0}회 / 경험치: ${user.exp} / HP: ${user.hp}/${user.maxhp} / 골드: ${user.gold} / 강화석: ${user.stones||0}</div>
 <b>기본 스탯</b><br>${baseStr}<br>
 <b>장비합산 스탯</b><br>${equipStr}<br>
 <b>공격/방어력</b><br>ATK: ${totalATK} / RATK: ${totalRATK} / MATK: ${totalMATK} / DEF: ${totalDEF}<br><br>
@@ -1243,13 +1322,13 @@ function triggerArmorSkills(timing, opts) {
 }
 
 // --- 전투 메인 함수 (수정 완성본) ---
-function battle(type) {
+function battle(type, diffKey) {
   let isDungeon = (type === "dungeon");
   let monster = makeMonster(user.level, isDungeon);
-  let userhp = { val: user.hp };
   let monhp = monster.hp + (isDungeon ? rint(5,18) : 0);
+  let userhp = { val: user.hp };
+  let dropMsg = "";
   let battleLog = [];
-
   // [수정] --- 장비+스탯 합산 공식 (스탯창과 동일하게)
   let baseStats = user.stats.slice();
   let equipStats = user.stats.slice();
@@ -1313,10 +1392,10 @@ function battle(type) {
     // [공격 루프]
     for(let atkNum=0; atkNum<attacksThisTurn; atkNum++) {
       let effects = [];
-    let dmg = rint(myATK-2, myATK+3);
-// 몬스터 방어력 적용
-    dmg = Math.floor(dmg * 100 / (100 + monster.def));
-    if (dmg < 1) dmg = 1;
+      let dmg = rint(myATK-2, myATK+3);
+      // 몬스터 방어력 적용
+      dmg = Math.floor(dmg * 100 / (100 + monster.def));
+      if (dmg < 1) dmg = 1;
       let isStrong = (Math.random() < Math.min(user.stats[0]/9999 * 0.7, 0.7));
       if(isStrong) {
         dmg = dmg * 2;
@@ -1344,22 +1423,22 @@ function battle(type) {
       }
 
       let monsterNameDisplay = monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name;
-let finalDmg = Math.floor(dmg * 100 / (100 + (monster.def||0)));
-if (finalDmg < 1) finalDmg = 1;
-monhp -= finalDmg;
+      let finalDmg = Math.floor(dmg * 100 / (100 + (monster.def||0)));
+      if (finalDmg < 1) finalDmg = 1;
+      monhp -= finalDmg;
       if(monhp < 0) monhp = 0;
-battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${effects.join(" ")}<span style="font-weight:bold;">${user.name}의 공격!</span> <span class="dmg-log">${monsterNameDisplay}에게 ${finalDmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
+      battleLog.push(`<b>[${turn}턴 공격${atkNum+1}]</b> ${effects.join(" ")}<span style="font-weight:bold;">${user.name}의 공격!</span> <span class="dmg-log">${monsterNameDisplay}에게 ${finalDmg}의 피해</span> (몬스터 HP:${Math.max(monhp,0)})`);
       if(monhp <= 0) break;
     }
     if(monhp <= 0) break;
     if(user.stunned && user.stunned > 0) { user.stunned--; continue; }
 
     // 몬스터 공격
-let monsterRawDmg = monster.atk + rint(-2, 3); // -2 ~ +3의 랜덤값 더하기
-if (monsterRawDmg < 1) monsterRawDmg = 1; // 1 이하로 떨어지지 않게
-let monsterDmgVal = Math.floor(monsterRawDmg * 100 / (100 + myDEF));
-if (monsterDmgVal < 1) monsterDmgVal = 1;
-let monsterDmg = { val: monsterDmgVal };
+    let monsterRawDmg = monster.atk + rint(-2, 3);
+    if (monsterRawDmg < 1) monsterRawDmg = 1;
+    let monsterDmgVal = Math.floor(monsterRawDmg * 100 / (100 + myDEF));
+    if (monsterDmgVal < 1) monsterDmgVal = 1;
+    let monsterDmg = { val: monsterDmgVal };
     triggerArmorSkills('defend', {
       battleLog, userhp, monhp, shieldObj, isSkillHit: false
     });
@@ -1422,15 +1501,23 @@ let monsterDmg = { val: monsterDmgVal };
   let rewardMsg = "";
   if(win){
     let gain = baseExp; let gold = baseGold; let dropMsg = "", stoneMsg="";
-    if (Math.random() < (isDungeon?0.5:0.25)) {
-      let item = makeItem(isDungeon, false, monster.unique ? monster.name : null);
-      if (addInv(item)) dropMsg = `<br>아이템 획득! ${itemDisplay(item)}`;
+    // 탐험에서만 등급 제한 보상 적용
+    if(type === "explore") {
+      if(Math.random() < 0.5) {
+        let item = getExploreItem(diffKey);
+        if(addInv(item)) dropMsg = `<br>아이템 획득! ${itemDisplay(item)}`;
+      }
+    } else {
+      if (Math.random() < (isDungeon?0.5:0.25)) {
+        let item = makeItem(isDungeon, false, monster.unique ? monster.name : null);
+        if (addInv(item)) dropMsg = `<br>아이템 획득! ${itemDisplay(item)}`;
+      }
     }
-if (Math.random() < (isDungeon ? 0.15 : 0.10)) {
-  let stonesDrop = rint(1, 10);
-  user.stones = (user.stones || 0) + stonesDrop;
-  stoneMsg = `<br><span style="color:#77e;">강화석 ${stonesDrop}개를 획득했다!</span>`;
-}
+    if (Math.random() < (isDungeon ? 0.15 : 0.10)) {
+      let stonesDrop = rint(1, 10);
+      user.stones = (user.stones || 0) + stonesDrop;
+      stoneMsg = `<br><span style="color:#77e;">강화석 ${stonesDrop}개를 획득했다!</span>`;
+    }
     user.exp += gain; user.gold += gold;
     user.hp = Math.max(1,userhp.val);
     let setBonusDesc = setBonusKey ? `<br><span class="set-bonus">[${uniqueSetBonus[setBonusKey].name} 세트 효과: ${uniqueSetBonus[setBonusKey].desc}]</span>` : "";
@@ -1451,6 +1538,7 @@ if (Math.random() < (isDungeon ? 0.15 : 0.10)) {
       }
       if(lost.length) rewardMsg += `<br><span class="dead-log">[장비 손실] ${lost.join(", ")}</span>`;
     }
+  if (exploring) exploring.done = true;
   }
   log(`[${isDungeon?'던전':'사냥'}] <span class="monname">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}</span>과의 턴제 전투 (최대 10턴)<br>` + battleLog.join("<br>") + rewardMsg);
   updateUser();
@@ -1485,6 +1573,245 @@ function statRandAdd(stats){
   let idx = rint(0,stats.length-1);
   stats[idx]++;
 }
+let exploring = null;
+let exploringStageSource = "hunt"; // battle 타입 저장용
+const exploreMaps = [
+  "초원", "숲", "동굴", "폐허", "사막", "빙설", "화산", "늪지", "유적", "산맥",
+  "오아시스", "분화구", "흑요암 협곡", "빙하 대지", "황혼 고원"
+];
+function showExploreMain() {
+  if(user.level < 150){
+    log("<span class='dead-log'>Lv.150부터 탐험이 가능합니다!</span>");
+    return;
+  }
+  let html = `<b>[탐험]</b><br>
+    <span style='color:#ffe161'>난이도를 선택하면 랜덤 지역에서 탐험이 시작됩니다.</span><br>`;
+  difficulties.forEach(diff => {
+    html += `<button class="inv-btn" onclick="beginExploreRandomMap('${diff.key}')">${diff.label}</button>
+             - <span style='color:#ccc'>${diff.desc} (Lv.${diff.minLv}+)</span><br>`;
+  });
+  html += `<button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`;
+  log(html);
+}
+function beginExploreRandomMap(diffKey) {
+  let diff = difficulties.find(d => d.key === diffKey);
+  if(user.level < diff.minLv){
+    log(`<span class='dead-log'>${diff.label} 난이도는 Lv.${diff.minLv}부터 입장 가능합니다!</span>`);
+    return;
+  }
+  // 맵 무작위 배정
+  let mapIdx = rint(0, exploreMaps.length-1);
+  let zone = exploreMaps[mapIdx];
+  // 이하 기존 탐험 시작 로직 (zone, diff.key)
+  beginExplore(zone, diff.key);
+}
+const diffMap = { 
+  "쉬움": 0.85, 
+  "보통": 1.2, 
+  "어려움": 1.5, 
+  "매우어려움": 2.0, 
+  "지옥": 2.7 
+};
+const difficulties = [
+  { key:"쉬움", minLv:150, label:"쉬움(EASY)", desc:"쉬운난이도입니다.", bonus:0.7 },
+  { key:"보통", minLv:180, label:"보통(NORMAL)", desc:"기본", bonus:1.3 },
+  { key:"어려움", minLv:260, label:"어려움(HARD)", desc:"어려운 난이도 입니다.", bonus:2.1 },
+  { key:"매우어려움", minLv:420, label:"매우 어려움(HELL)", desc:"도전을 좋아하시나요?", bonus:3.3 },
+  { key:"지옥", minLv:680, label:"지옥(INFERNO)", desc:"극악", bonus:6.5 }
+];
+function chooseExploreZone(zone) {
+  let html = `<b>[${zone} - 난이도 선택]</b><br>`;
+  difficulties.forEach(diff => {
+    html += `<button class="inv-btn" onclick="beginExplore('${zone}','${diff.key}')">${diff.label}</button> - <span style='color:#ccc'>${diff.desc} (Lv.${diff.minLv}+)</span><br>`;
+  });
+  html += `<button class="inv-btn" onclick="showExploreMain()">난이도 다시 선택</button>`;
+  log(html);
+}
+function beginExplore(zone, diff) {
+  if (exploring && !exploring.done) {
+    log("<span class='dead-log'>이미 탐험 중입니다! 진행을 끝내세요.</span>");
+    return;
+  }
+  const maxStage = rint(6, 10); // 6~10스테이지
+  exploring = {
+    zone, diff, done: false,
+    stage: 1, maxStage,
+    progress: [],
+    rewardSum: { gold: 0, exp: 0, stones: 0, item: 0 }
+  };
+  showExploreProgress();
+}
+// 탐험 이벤트 전투 리워드 보상 - 난이도별 적용
+function getExploreRewardRarity(diff) {
+  // 난이도별 보상 등급과 확률
+  // [등급, 확률] (전체합 100%는 아니어도 됨)
+  const table = {
+    "쉬움": [
+      ["지옥",   0.002],
+      ["유일",   0.01],
+      ["레전더리", 0.15],
+      ["에픽",   1],
+      ["유니크", 5],
+      ["레어",   30],
+      ["일반",   100]
+    ],
+    "보통": [
+      ["지옥",   0.005],
+      ["유일",   0.03],
+      ["레전더리", 0.3],
+      ["에픽",   2],
+      ["유니크", 9],
+      ["레어",   40],
+      ["일반",   100]
+    ],
+    "어려움": [
+      ["지옥",   0.01],
+      ["유일",   0.07],
+      ["레전더리", 1],
+      ["에픽",   4],
+      ["유니크", 18],
+      ["레어",   50],
+      ["일반",   100]
+    ],
+    "매우어려움": [
+      ["지옥",   0.025],
+      ["유일",   0.17],
+      ["레전더리", 2.5],
+      ["에픽",   7],
+      ["유니크", 28],
+      ["레어",   65],
+      ["일반",   100]
+    ],
+    "지옥": [
+      ["지옥",   0.05],
+      ["유일",   0.25],
+      ["레전더리", 5],
+      ["에픽",   10],
+      ["유니크", 38],
+      ["레어",   80],
+      ["일반",   100]
+    ],
+  };
+  let rates = table[diff] || table["쉬움"];
+  let r = Math.random() * 100;
+  let acc = 0;
+  for (let [rarity, prob] of rates) {
+    acc += prob;
+    if (r < acc) return rarity;
+  }
+  return "일반";
+}
+function getExploreItem(diff) {
+  let rarity = getExploreRewardRarity(diff);
+  return makeItem(false, false, null, rarity);
+}
+function showExploreProgress() {
+  if (!exploring) return;
+  let html = `<b>[탐험: ${exploring.zone} / ${exploring.diff}]</b><br>
+  진행도: ${exploring.stage > exploring.maxStage ? exploring.maxStage : exploring.stage} / ${exploring.maxStage}<br>
+  <span style="color:#ffe161">획득: GOLD ${exploring.rewardSum.gold} / EXP ${exploring.rewardSum.exp} / 강화석 ${exploring.rewardSum.stones} / 아이템 ${exploring.rewardSum.item}</span><br>`;
+  if (exploring.done || exploring.stage > exploring.maxStage) {
+    html += `<br><b>탐험 종료!</b><br>
+    <span style="color:#b8ffad">보상합계:<br>
+    GOLD:${exploring.rewardSum.gold}, EXP:${exploring.rewardSum.exp}, 강화석:${exploring.rewardSum.stones}, 아이템:${exploring.rewardSum.item}</span><br>
+    <button class="inv-btn" onclick="exploring=null;updateUser();log('이전 화면으로 돌아감');">닫기</button>`;
+    log(html);
+    exploring = null;
+    return;
+  }
+  html += `<button class="inv-btn" onclick="exploreNextStage()">다음 단계 진행</button>
+  <button class="inv-btn" onclick="if(confirm('탐험을 정말 중단합니까?')) { exploring=null; updateUser();log('이전 화면으로 돌아감'); }">탐험 중단</button>`;
+  log(html);
+}
+function exploreNextStage() {
+  if (!exploring || exploring.done) return;
+  if (user.hp <= 1) { // HP 1 이하: 자동 종료
+    exploring.done = true;
+    showExploreProgress();
+    return;
+  }
+  let stage = exploring.stage;
+  // 이벤트 종류 결정 (전투/보상/휴식)
+  let roll = Math.random();
+  let eType = "battle";
+  if (roll < 0.16) eType = "reward";
+  else if (roll < 0.25) eType = "rest";
+  else if (roll > 0.92) eType = "elite";
+  // 난이도 보정
+  let diff = exploring.diff;
+  let desc = "";
+  if (eType === "battle") desc = "일반 몬스터와 전투!";
+  if (eType === "elite") desc = "<span class='unique-monster'>엘리트 몬스터와 전투!</span>";
+  if (eType === "reward") desc = "<span style='color:#bbeeff'>보물 발견! 추가 보상!</span>";
+  if (eType === "rest") desc = "<span style='color:#8aff8a'>안전한 장소 발견! 휴식 가능</span>";
+  // 전투/이벤트 버튼
+  let nextBtn = `<button class="inv-btn" onclick="resolveExploreEvent('${eType}')">이벤트 진행</button>`;
+  log(`<b>[탐험 - ${exploring.zone}]</b><br>스테이지 ${stage} / ${exploring.maxStage}<br>${desc}<br>${nextBtn}`);
+}
+function resolveExploreEvent(eType) {
+  let diff = exploring.diff;
+  // 난이도 배율: 쉬움 0.7, 보통 1.0, 어려움 1.2, 매우어려움 1.35
+  let diffMap = { "쉬움":0.7, "보통":1.0, "어려움":1.2, "매우어려움":1.35 };
+  let diffBonus = diffMap[diff] || 1.0;
+if (eType === "battle" || eType === "elite") {
+  exploringStageSource = (eType === "battle" ? "hunt" : "dungeon");
+  let oldMakeMonster = window.makeMonster;
+  // diff는 exploring.diff로부터 받은 난이도 문자열 (ex: "쉬움", "지옥" 등)
+  let diffBonus = diffMap[diff] || 1.0;
+  window.makeMonster = function(level, isDungeon = false) {
+    let m = oldMakeMonster(level, isDungeon);
+    m.hp = Math.round(m.hp * diffBonus);
+    m.atk = Math.round(m.atk * diffBonus);
+    m.def = Math.round(m.def * diffBonus);
+    return m;
+  };
+    let gold0 = user.gold, exp0 = user.exp, stones0 = user.stones, inv0 = user.inv.length;
+     battle("explore", diff);
+ setTimeout(() => {
+      window.makeMonster = oldMakeMonster;
+      // *** 보상 후 [다음] 버튼 삽입 ***
+      let goldGet = user.gold - gold0;
+      let expGet = user.exp - exp0;
+      let stoneGet = (user.stones||0) - (stones0||0);
+      let itemGet = Math.max(0, user.inv.length - inv0);
+      exploring.rewardSum.gold += Math.max(0,goldGet);
+      exploring.rewardSum.exp += Math.max(0,expGet);
+      exploring.rewardSum.stones += Math.max(0,stoneGet);
+      exploring.rewardSum.item += itemGet;
+
+      // [다음] 버튼으로만 탐험 진행
+      let btn = `<br><button class="inv-btn" onclick="afterExploreEvent()">다음</button>`;
+      let lastLog = document.getElementById("logbox").innerHTML;
+      document.getElementById("logbox").innerHTML = lastLog + btn;
+    }, 300);
+    return;
+  }
+
+  if (eType === "reward") {
+    // 난이도별 추가 보상
+    let gold = Math.round(rint(40,90) * diffBonus);
+    let stones = rint(0,1+Math.floor(diffBonus*3));
+    let exp = Math.round(rint(15,40) * diffBonus);
+    user.gold += gold; user.stones = (user.stones||0) + stones; user.exp += exp;
+    exploring.rewardSum.gold += gold;
+    exploring.rewardSum.stones += stones;
+    exploring.rewardSum.exp += exp;
+    log(`<span style="color:#bbeeff">[보물 발견] GOLD+${gold}, 강화석+${stones}, EXP+${exp}</span><br>
+    <button class="inv-btn" onclick="afterExploreEvent()">다음</button>`);
+    return;
+  }
+  if (eType === "rest") {
+    let heal = Math.round(user.maxhp * 0.24 + rint(2,10));
+    user.hp = Math.min(user.maxhp, user.hp + heal);
+    log(`<span style="color:#8aff8a">[휴식 성공] HP +${heal} 회복!</span><br>
+    <button class="inv-btn" onclick="afterExploreEvent()">다음</button>`);
+    return;
+  }
+}
+function afterExploreEvent() {
+  exploring.stage++;
+  showExploreProgress();
+}
 // 환생: 장비 착용/창고만 유지, 소지품 초기화
 function rebirth(){
   if(user.level<999){log("레벨 999 달성 시에만 환생 가능!<br><button class='inv-btn' onclick='showTown()'>돌아가기</button>");return;}
@@ -1492,9 +1819,10 @@ function rebirth(){
   let keepEquip = {};
   for(let slot of equipSlots) if(user.equip[slot]) keepEquip[slot] = user.equip[slot];
   let keepStorage = user.storage||[];
+  user.rebirth = (user.rebirth||0) + 1;  // 먼저 증가시킴!
   user.level=1; user.exp=0; user.gold=100;
-  user.stats=user.stats.map(x=>1+user.rebirth*10);
-  user.statmax=9999; user.rebirth+=1; user.hp=30; user.maxhp=30;
+  user.stats = [1,1,1,1,1].map(x => x + user.rebirth * 10); // 환생 누적!
+  user.statmax=9999; user.hp=30; user.maxhp=30;
   user.equip=keepEquip; user.inv=[]; user.stones=0; user.storage = keepStorage;
   log("환생 완료! 기본 능력치 +10이 부여되었습니다.<br><button class='inv-btn' onclick='showTown()'>돌아가기</button>");
   updateUser();
