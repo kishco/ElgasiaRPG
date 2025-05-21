@@ -28,125 +28,62 @@
     }
 
 .equip-legend {
-  color: #ffe161;
+  color: gold;
   font-weight: bold;
-  letter-spacing: 1.3px;
-  font-size: 18px;
   text-shadow:
-    0 0 8px #ffe161,
-    0 0 18px #ffe161,
-    0 0 30px #ffdb4d,
-    0 0 44px #ffe161,
-    0 0 60px #ffe161,
-    0 0 110px #fff98b;
-  filter: brightness(1.37) drop-shadow(0 0 10px #fff98b) drop-shadow(0 0 36px #ffe161);
-  /* 글로우 + 번쩍이 + 점멸을 동시에 */
-  animation: legend-glow 1.06s infinite alternate,
-             legend-shine 2.9s infinite linear,
-             legend-blink 2.8s infinite ease-in-out;
+    0 0 4px #ffe161,
+    0 0 10px #ffd966;
+  animation: legend-glow 1.2s infinite alternate, legend-blink 2.8s infinite alternate;
 }
-
 @keyframes legend-glow {
-  0% { filter: brightness(1.2) drop-shadow(0 0 16px #ffe161); }
-  100% { filter: brightness(1.57) drop-shadow(0 0 33px #ffe161) drop-shadow(0 0 60px #ffea65); }
+  from { filter: brightness(1.08); }
+  to   { filter: brightness(1.19) drop-shadow(0 0 11px #ffe161); }
 }
-@keyframes legend-shine {
-  0%   { text-shadow:
-            0 0 8px #ffe161,
-            0 0 18px #ffe161,
-            0 0 30px #ffdb4d,
-            0 0 44px #ffe161,
-            0 0 60px #ffe161,
-            0 0 110px #fff98b;
-        }
-  40%  { text-shadow:
-            0 0 16px #fff98b,
-            0 0 36px #ffe161,
-            0 0 60px #ffe161,
-            0 0 80px #ffe161,
-            0 0 130px #fffbe8;
-        }
-  80%  { text-shadow:
-            0 0 22px #ffe161,
-            0 0 42px #ffe161,
-            0 0 70px #ffe161,
-            0 0 110px #fffbe8;
-        }
-  100% { text-shadow:
-            0 0 8px #ffe161,
-            0 0 18px #ffe161,
-            0 0 30px #ffdb4d,
-            0 0 44px #ffe161,
-            0 0 60px #ffe161,
-            0 0 110px #fff98b;
-        }
-}
-/* 약한 점멸 효과 (0.88 ~ 1.0 opacity, 부드럽게) */
 @keyframes legend-blink {
-  0%   { opacity: 0.88; }
-  40%  { opacity: 1; }
-  65%  { opacity: 0.93; }
-  80%  { opacity: 1; }
-  100% { opacity: 0.88; }
+  0% { opacity: 1; }
+  85% { opacity: 0.94; }
+  100% { opacity: 1; }
 }
-
-
 .equip-myth {
-  color: #d76bff;
+  color: #b366ff;
   font-weight: bold;
-  letter-spacing: 1.3px;
-  font-size: 18px;
   text-shadow:
-    0 0 15px #d76bff,
-    0 0 32px #b366ff,
-    0 0 54px #a559f3,
-    0 0 90px #f6e6ff,
-    0 0 120px #c0a6ff;
-  filter: brightness(1.27) drop-shadow(0 0 18px #d76bff);
-  animation: myth-glow 1.3s infinite alternate,
-             myth-blink 1.95s infinite cubic-bezier(.68,0,.5,1);
+    0 0 7px #d76bff,
+    0 0 18px #a559f3,
+    0 0 22px #b366ff;
+  animation: myth-glow 1.15s infinite alternate, myth-blink 2.2s infinite alternate;
 }
-
 @keyframes myth-glow {
-  0% { filter: brightness(1.0) drop-shadow(0 0 18px #d76bff);}
-  50% { filter: brightness(1.5) drop-shadow(0 0 42px #b366ff);}
-  100% { filter: brightness(1.12) drop-shadow(0 0 28px #a559f3);}
+  from { filter: brightness(1.14); }
+  to   { filter: brightness(1.30) drop-shadow(0 0 13px #cdaaff); }
 }
-/* 유일: 더 넓은 점멸 범위 */
 @keyframes myth-blink {
-  0%   { opacity: 0.76; }
-  20%  { opacity: 1.00; }
-  58%  { opacity: 0.90; }
-  80%  { opacity: 1.00; }
-  100% { opacity: 0.76; }
-}
-.equip-inferno {
-  color: #ff2323;
-  font-weight: bold;
-  font-size: 18px;
-  letter-spacing: 1.5px;
-  text-shadow:
-    0 0 20px #ff2323,
-    0 0 50px #ff4545,
-    0 0 90px #ff6868,
-    0 0 150px #ffcaca;
-  filter: brightness(1.4) drop-shadow(0 0 22px #ff2323);
-  animation: inferno-glow 0.66s infinite alternate,
-             inferno-blink 1.4s infinite cubic-bezier(.62,0,.5,1);
+  0% { opacity: 1; }
+  80% { opacity: 0.93; }
+  100% { opacity: 1; }
 }
 
-@keyframes inferno-glow {
-  0%   { filter: brightness(1.15) drop-shadow(0 0 20px #ff2323);}
-  35%  { filter: brightness(1.65) drop-shadow(0 0 60px #ff2323);}
-  70%  { filter: brightness(1.35) drop-shadow(0 0 90px #ff3939);}
-  100% { filter: brightness(1.15) drop-shadow(0 0 20px #ff2323);}
+.equip-inferno {
+  color: #ff2424;
+  font-weight: bold;
+  font-size: 18px;
+  letter-spacing: 1.4px;
+  text-shadow:
+    0 0 8px #fa2525,
+    0 0 18px #ff2323,
+    0 0 34px #ff3939,
+    0 0 42px #ff6868;
+  filter: brightness(1.16) drop-shadow(0 0 7px #ff6464);
+  animation: doomglow 0.82s infinite alternate, inferno-blink 1.6s infinite alternate;
+}
+@keyframes doomglow {
+  from { text-shadow: 0 0 12px #ff2323, 0 0 20px #ff6d6d; }
+  to   { text-shadow: 0 0 23px #ff5656, 0 0 40px #ff2323; }
 }
 @keyframes inferno-blink {
-  0%   { opacity: 0.68; }
-  35%  { opacity: 1.00; }
-  55%  { opacity: 0.84; }
-  80%  { opacity: 1.00; }
-  100% { opacity: 0.68; }
+  0% { opacity: 1; }
+  90% { opacity: 0.93; }
+  100% { opacity: 1; }
 }
     .log { border: 1px solid #222; background: #191934; margin: 16px 0; border-radius: 10px; min-height: 120px; padding: 14px; font-size:17px;}
    .inv-btn {
