@@ -453,10 +453,19 @@ const armorSkillPool = [
   { name: "실드부여",     type: "shield",     base: [20, 24]}   // 실드량
 ];
 const armorSkillLogEffects = {
-  "regen":        { icon:"💚",  color:"#5eff86",  msg: v=>`HP +${v}% 회복` },
-  "leech":        { icon:"🩸",  color:"#c9488a",  msg: v=>`피해의 ${v}% 흡혈` },
-  "dmgreduce":    { icon:"🛡️", color:"#a1f2ff",  msg: v=>`받는 피해 -${v}%` },
-  "ignorehit":    { icon:"🧱",  color:"#c8d7e2",  msg: v=>`첫 피격 무시` },
+  "regen": {
+    icon:"💚", color:"#5eff86",
+    msg: (heal) => `HP +${heal}`
+  },
+  "leech": {
+    icon:"🩸", color:"#c9488a",
+    msg: (heal) => `HP +${heal}`
+  },
+  "dmgreduce": {
+    icon:"🛡️", color:"#a1f2ff",
+    msg: (dmgRed) => `받는 피해 -${dmgRed}`
+  },
+  "ignorehit":    { icon:"🧱",  color:"#c8d7e2",  msg: v=>`피격 무시` },
   "deathproof":   { icon:"⚰️",  color:"#f0f055",  msg: v=>`사망방지` },
   "reflect":      { icon:"🪞",  color:"#8ef6f2",  msg: v=>`공격반사 +${v}%` },
   "evadeup":      { icon:"🏃‍♂️",color:"#8af8a7",  msg: v=>`회피 +${v.toFixed(1)}%` },
