@@ -518,6 +518,7 @@ const uniqueSetBonus = {
   "토암": { name: "토암 세트", desc: "전투 중 1회 사망 시 50% 부활" }
 };
 let user = null; let saveSlot = 1;
+let dungeonRun = null;  // <<==== 여기!
 function rint(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 // 몬스터 생성
 function makeMonster(level, isDungeon = false) {
@@ -1044,6 +1045,55 @@ function moveToInventory(idx) {
   user.inv.push(item);
   user.storage.splice(idx,1);
   showStorage();
+  updateUser();
+}
+function startDungeonRun() {
+  if (user.hp <= 1) {
+    log("<span class='dead-log'>HP가 1일 때는 던전에 입장할 수 없습니다!</span>");
+    return;
+  }
+  dungeonRun = { ongoing: true, battles: 0, loot: [], stones: 0, gold: 0, exp: 0 };
+  nextDungeonBattle();
+}
+
+function nextDungeonBattle() {
+  if (!dungeonRun || !dungeonRun.ongoing) return;
+  // 전투 전 HP 체크
+  if (user.hp <= 1) {
+    endDungeonRun();
+    return;
+  }
+  // 기존 battle 함수 재활용
+  let gold0 = user.gold, exp0 = user.exp, stones0 = user.stones, inv0 = user.inv.length;
+  battle("dungeon");
+  setTimeout(() => {
+    // 보상 누적
+    dungeonRun.battles++;
+    dungeonRun.gold += user.gold - gold0;
+    dungeonRun.exp += user.exp - exp0;
+    dungeonRun.stones += (user.stones||0) - (stones0||0);
+    let itemGet = Math.max(0, user.inv.length - inv0);
+    if(itemGet > 0) dungeonRun.loot.push(itemGet);
+    // 버튼 추가
+    let btns = `<br>
+      <button class="inv-btn" onclick="nextDungeonBattle()">계속하기</button>
+      <button class="inv-btn" onclick="endDungeonRun()">끝내기</button>`;
+    let lastLog = document.getElementById("logbox").innerHTML;
+    document.getElementById("logbox").innerHTML = lastLog + btns;
+  }, 300);
+}
+
+function endDungeonRun() {
+  if (!dungeonRun) {
+    log('진행 중인 던전이 없습니다.');
+    return;
+  }
+  let sumMsg = `<b>[던전 종료]</b><br>
+    총 전투: ${dungeonRun.battles}회<br>
+    획득 GOLD: ${dungeonRun.gold} / EXP: ${dungeonRun.exp} / 강화석: ${dungeonRun.stones} / 아이템: ${dungeonRun.loot.reduce((a,b)=>a+b,0)}<br>
+    <button class="inv-btn" onclick="showTown()">마을로 돌아가기</button>`;
+  dungeonRun = null;
+  log(sumMsg);
   updateUser();
 }
 // 캐릭터창(기본/장비합산 스탯)
@@ -1593,7 +1643,7 @@ function action(type){
 function dungeonEnterUI() {
   log(`<b>[던전 입장]</b><br>
   <span style="color:#ffd700;">던전에서 죽으면 확률적으로 장비를 잃을 수 있습니다.</span><br><br>
-  <button class="inv-btn" onclick="dungeonAction()">입장하기</button>
+<button onclick="startDungeonRun()">입장하기</button>
   <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">취소</button>`);
 }
 function dungeonAction(){ battle("dungeon"); }
