@@ -12,71 +12,91 @@
     .btn-bar button:disabled { background: #333; color: #aaa; cursor: not-allowed; }
     .equip-rare { color: #51cafc; } .equip-unique { color: #d76bff; }
     .equip-normal { color: #fff;}
-.equip-epic {
-  color: #ff90b5;
-  font-weight: bold;
-  text-shadow:
-    0 0 8px #ff90b5,
-    0 0 22px #f080c1,
-    0 0 35px #ffe2f1;
-  animation: epic-glow 1.5s infinite alternate;
-}
-@keyframes epic-glow {
-  from { filter: brightness(1) drop-shadow(0 0 8px #ff90b5); }
-  to   { filter: brightness(1.24) drop-shadow(0 0 14px #ff90b5) drop-shadow(0 0 25px #f080c1); }
-}
+    .equip-epic {
+      color: #ff90b5;
+      font-weight: bold;
+      text-shadow:
+        0 0 3px #ffd6eb,
+        0 0 8px #f080c188,
+        0 0 14px #ff90b588;
+      animation: epic-blink 1.7s infinite alternate;
+    }
+    @keyframes epic-blink {
+      from { filter: brightness(1.11) blur(0.08px); }
+      50%  { filter: brightness(1.25) blur(0.16px);}
+      to   { filter: brightness(1.11) blur(0.08px); }
+    }
 
-.equip-legend {
-  color: gold;
-  font-weight: bold;
-  text-shadow:
-    0 0 12px #ffe161,
-    0 0 32px #ffd966,
-    0 0 44px #ffe161;
-  animation: legend-glow 1.1s infinite alternate;
-  letter-spacing: 1.1px;
-}
-@keyframes legend-glow {
-  from { filter: brightness(1.08) drop-shadow(0 0 10px #ffe161); }
-  to   { filter: brightness(1.33) drop-shadow(0 0 24px #ffd700) drop-shadow(0 0 32px #ffe161); }
-}
+    .equip-legend {
+      color: gold;
+      font-weight: bold;
+      text-shadow:
+        0 0 4px #fff6b1,
+        0 0 11px #ffe161aa,
+        0 0 18px #ffe16166;
+      animation: legend-blink 1.5s infinite alternate;
+    }
+    @keyframes legend-blink {
+      from { filter: brightness(1.09) blur(0.11px);}
+      50%  { filter: brightness(1.22) blur(0.21px);}
+      to   { filter: brightness(1.09) blur(0.11px);}
+    }
 
-.equip-myth {
-  color: #b366ff;
-  font-weight: bold;
-  text-shadow:
-    0 0 13px #d76bff,
-    0 0 24px #a559f3,
-    0 0 38px #b366ff;
-  animation: myth-glow 1.4s infinite alternate;
-  letter-spacing: 1.15px;
-}
-@keyframes myth-glow {
-  from { filter: brightness(1.10) drop-shadow(0 0 11px #cdaaff); }
-  to   { filter: brightness(1.38) drop-shadow(0 0 23px #b366ff) drop-shadow(0 0 27px #a559f3); }
-}
+    .equip-myth {
+      color: #b366ff;
+      font-weight: bold;
+      text-shadow:
+        0 0 4px #ecd6ff,
+        0 0 13px #d76bffaa,
+        0 0 21px #a559f366;
+      animation: myth-blink 1.6s infinite alternate;
+    }
+    @keyframes myth-blink {
+      from { filter: brightness(1.13) blur(0.11px);}
+      50%  { filter: brightness(1.29) blur(0.25px);}
+      to   { filter: brightness(1.13) blur(0.11px);}
+    }
 
-.equip-inferno {
-  color: #ff2424;
-  font-weight: bold;
-  font-size: 18px;
-  letter-spacing: 1.4px;
-  text-shadow:
-    0 0 15px #fa2525,
-    0 0 38px #ff2323,
-    0 0 60px #ff3939,
-    0 0 90px #ff6868;
-  filter: brightness(1.28) drop-shadow(0 0 12px #ff6464);
-  animation: doomglow 0.93s infinite alternate, inferno-blink 1.8s infinite alternate;
-}
-@keyframes doomglow {
-  from { text-shadow: 0 0 26px #ff2323, 0 0 55px #ff6d6d; }
-  to   { text-shadow: 0 0 45px #ff5656, 0 0 95px #ff2323; }
-}
-@keyframes inferno-blink {
-  from { opacity: 0.96; }
-  to   { opacity: 1; filter: brightness(1.39) drop-shadow(0 0 18px #ff2323); }
-}
+    .equip-inferno {
+      color: #ff2424;
+      font-weight: bold;
+      font-size: 22px;
+      letter-spacing: 1.2px;
+      /* 강한 붉은 글로우 여러겹 + 점멸 */
+      text-shadow:
+        0 0 8px #fff2f2,
+        0 0 16px #ff2323cc,
+        0 0 32px #ff3939bb,
+        0 0 60px #ff686888,
+        0 0 110px #ff393988;
+      filter: brightness(1.18) blur(0.10px) drop-shadow(0 0 6px #ff6464);
+      animation: inferno-blink 0.85s infinite alternate, inferno-shine 2s infinite alternate;
+    }
+    @keyframes inferno-blink {
+      from { opacity: 0.92; filter: brightness(1.23) blur(0.10px);}
+      50%  { opacity: 1; filter: brightness(1.32) blur(0.20px);}
+      to   { opacity: 0.97; filter: brightness(1.23) blur(0.10px);}
+    }
+    @keyframes inferno-shine {
+      0% { text-shadow:
+        0 0 8px #fff2f2,
+        0 0 16px #ff2323cc,
+        0 0 32px #ff3939bb,
+        0 0 60px #ff686888,
+        0 0 110px #ff393988; }
+      50% { text-shadow:
+        0 0 18px #fff2f2,
+        0 0 36px #ff2323ee,
+        0 0 85px #ff3939cc,
+        0 0 120px #ff6868cc,
+        0 0 190px #ff3939cc; }
+      100% { text-shadow:
+        0 0 8px #fff2f2,
+        0 0 16px #ff2323cc,
+        0 0 32px #ff3939bb,
+        0 0 60px #ff686888,
+        0 0 110px #ff393988; }
+    }
     .log { border: 1px solid #222; background: #191934; margin: 16px 0; border-radius: 10px; min-height: 120px; padding: 14px; font-size:17px;}
    .inv-btn {
   min-width: 74px;
@@ -828,26 +848,29 @@ function unequip(slot) {
   updateUser();
 }
 function itemDisplay(item){
-  let txt = `<div style="display:flex;align-items:center;">
-      <span class="${rarityColors[item.rarity]}" style="font-size:16px;margin-right:7px;min-width:68px;text-align:center;">[${item.rarity}]</span>
-      <span style="font-weight:700;font-size:16px;">${item.name}</span>
-    </div>`;
-
-  txt += `<div style="margin-left:10px;margin-top:1px;font-size:14px;">`;
-  txt += `<span class="stat-label">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]}</span>`;
-  if (item.attackType === "근접")   txt += ` <span class="equip-bonus">ATK:${item.stat[5]}</span>`;
-  if (item.attackType === "원거리") txt += ` <span class="equip-bonus">RATK:${item.stat[6]}</span>`;
-  if (item.attackType === "마법")   txt += ` <span class="equip-bonus">MATK:${item.stat[7]}</span>`;
-  if (item.skill)      txt += ` <span class="equip-bonus">스킬:${item.skill}</span>`;
-  if (item.armorSkill) txt += ` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${item.armorSkill.value})</span>`;
-  // ★★★ 지옥 무기 특수효과 표시
-  if (item.special)    txt += ` <span class="equip-bonus">특수효과: ${item.special.map(s=>({
-    "strongAtkUp":"강공격확률+25%",
-    "doubleHit":"추가공격+15%",
-    "ignoreDef":"방어무시+25%"
-  }[s.type])).join(", ")}</span>`;
-  if (item.enh)        txt += ` <span class="enh-lv">+${item.enh}</span>`;
-  txt += `</div>`;
+  // 등급별 클래스 가져오기
+  let rarityClass = rarityColors[item.rarity];
+  let mainLabel = `[${item.rarity}]${item.enh ? " +"+item.enh : ""} ${item.name}`;
+  let txt = `
+    <div style="display:flex;align-items:center;">
+      <span class="${rarityClass}" style="font-size:16px;margin-right:7px;min-width:200px;text-align:left;font-weight:700;">
+        ${mainLabel}
+      </span>
+    </div>
+    <div style="margin-left:10px;margin-top:1px;font-size:14px;">
+      <span class="stat-label">STR:${item.stat[0]} DEX:${item.stat[1]} INT:${item.stat[2]} VIT:${item.stat[3]} LUK:${item.stat[4]}</span>
+      ${item.attackType === "근접"   ? ` <span class="equip-bonus">ATK:${item.stat[5]}</span>` : ""}
+      ${item.attackType === "원거리" ? ` <span class="equip-bonus">RATK:${item.stat[6]}</span>` : ""}
+      ${item.attackType === "마법"   ? ` <span class="equip-bonus">MATK:${item.stat[7]}</span>` : ""}
+      ${item.skill      ? ` <span class="equip-bonus">스킬:${item.skill}</span>` : ""}
+      ${item.armorSkill ? ` <span class="equip-bonus">방어구스킬:${item.armorSkill.name}(+${item.armorSkill.value})</span>` : ""}
+      ${item.special    ? ` <span class="equip-bonus">특수효과: ${item.special.map(s=>({
+        "strongAtkUp":"강공격확률+25%",
+        "doubleHit":"추가공격+15%",
+        "ignoreDef":"방어무시+25%"
+      }[s.type])).join(", ")}</span>` : ""}
+    </div>
+  `;
   return txt;
 }
 
