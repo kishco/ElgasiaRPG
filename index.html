@@ -522,23 +522,23 @@ function rint(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 // 몬스터 생성
 function makeMonster(level, isDungeon = false) {
 if (isDungeon && Math.random() < 0.01) {
-  // 유일(보스) 몬스터 - **하향**
+  // 유일(보스) 몬스터 추가 하향
   let name = uniqueMonsters[rint(0, uniqueMonsters.length-1)];
-  let hp = Math.floor((60 + level*8 + rint(30,80)) * 0.83); // 약 17% 하향
-  let atk = Math.floor((12 + level*3 + rint(6,15)) * 0.85); // 약 15% 하향
-  let def = Math.floor((level/4 + rint(5,15)) * 0.9);       // 약 10% 하향
+  let hp = Math.floor((60 + level*8 + rint(30,80)) * 0.71); // 총 약 29% 하향
+  let atk = Math.floor((12 + level*3 + rint(6,15)) * 0.74); // 총 약 26% 하향
+  let def = Math.floor((level/4 + rint(5,15)) * 0.78);      // 총 약 22% 하향
   return { name, hp, atk, def, unique: true };
 }
   let prefix = monsterPrefixes[rint(0, monsterPrefixes.length - 1)];
   let nameBase = monsterNames[rint(0, monsterNames.length - 1)];
   let name = prefix + " " + nameBase;
   let hp, atk, def;
-  if (isDungeon) {
-    // 던전 몬스터 (기존처럼 강화)
-    hp = Math.floor(20 + level * 4 + rint(0, 16)) + rint(12, 40) + Math.floor(level * 2.5);
-    atk = Math.floor(5 + level * 1.3 + rint(1, 4));
-    def = Math.floor(level/5 + rint(0, 2));
-  } else {
+if (isDungeon) {
+  // 던전 몬스터 추가 하향
+  hp = Math.floor((20 + level * 4 + rint(0, 16) + rint(12, 40) + Math.floor(level * 2.5)) * 0.82); // 18% 하향
+  atk = Math.floor((5 + level * 1.3 + rint(1, 4)) * 0.85);   // 15% 하향
+  def = Math.floor((level/5 + rint(0, 2)) * 0.86);           // 14% 하향
+} else {
     // 일반(사냥) 몬스터 (더 약하게)
     hp = Math.floor(8 + level * 1.3 + rint(0, 6));
     atk = Math.floor(1.5 + level * 0.4 + rint(0, 1.5));
