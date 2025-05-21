@@ -1147,6 +1147,28 @@ let html = `<b>[캐릭터]</b><br>
 
   let setBonusKey = checkUniqueSetBonus();
   let setBonusMsg = setBonusKey ? `<br><span class="set-bonus">[${uniqueSetBonus[setBonusKey].name} 세트 효과: ${uniqueSetBonus[setBonusKey].desc}]</span>` : "";
+  let setCount = { 광휘:0, 흑섬:0, 수암:0, 토암:0 };
+  for (let slot of ["머리", "상의", "하의", "손", "신발"]) {
+    let eq = user.equip[slot];
+    if (eq && eq.rarity === "유일") {
+      let pre = eq.uniqPrefix || (eq.name.split("의")[0]);
+      if (setCount[pre] !== undefined) setCount[pre]++;
+    }
+  }
+  let setBonusList = [];
+  for (let key in setCount) {
+    if (setCount[key] > 0 && uniqueSetBonus[key]) {
+      let cnt = setCount[key];
+      let effect = uniqueSetBonus[key].desc;
+      let status = cnt >= 4 ? "<b style='color:#ffe161'>세트 효과 발동!</b>" : "세트 효과 미발동";
+      setBonusList.push(`[${uniqueSetBonus[key].name}] ${cnt}/4 (${effect}, ${status})`);
+    }
+  }
+  if(setBonusList.length){
+    html += `<div style="margin:12px 0 8px 0; color:#ffe161; font-size:16px;">
+      <b>유일 세트 착용 현황</b><br>${setBonusList.join("<br>")}
+    </div>`;
+  }
   html += setBonusMsg;
   html += `<br><button class="inv-btn" onclick="showInv()">소지품</button>
   <button class="inv-btn" onclick="updateUser();log('이전 화면으로 돌아감');">닫기</button>`;
@@ -1627,7 +1649,7 @@ function battle(type, diffKey) {
       }
       if(lost.length) rewardMsg += `<br><span class="dead-log">[장비 손실] ${lost.join(", ")}</span>`;
     }
-  if (exploring) exploring.done = true;
+  if (exploring) exploring.done = true;let setCount = { 광휘:0, 흑섬:0, 수암:0, 토암:0 };
   }
   log(`[${isDungeon?'던전':'사냥'}] <span class="monname">${monster.unique ? `<span class="unique-monster">${monster.name}</span>` : monster.name}</span>과의 턴제 전투 (최대 10턴)<br>` + battleLog.join("<br>") + rewardMsg);
   updateUser();
