@@ -16,39 +16,66 @@
   color: #ff90b5;
   font-weight: bold;
   text-shadow:
-    0 0 7px #ff90b5,
-    0 0 14px #f080c1;
+    0 0 8px #ff90b5,
+    0 0 22px #f080c1,
+    0 0 35px #ffe2f1;
+  animation: epic-glow 1.5s infinite alternate;
 }
+@keyframes epic-glow {
+  from { filter: brightness(1) drop-shadow(0 0 8px #ff90b5); }
+  to   { filter: brightness(1.24) drop-shadow(0 0 14px #ff90b5) drop-shadow(0 0 25px #f080c1); }
+}
+
 .equip-legend {
   color: gold;
   font-weight: bold;
   text-shadow:
-    0 0 6px #ffe161,
-    0 0 20px #ffe161;
+    0 0 12px #ffe161,
+    0 0 32px #ffd966,
+    0 0 44px #ffe161;
+  animation: legend-glow 1.1s infinite alternate;
+  letter-spacing: 1.1px;
 }
+@keyframes legend-glow {
+  from { filter: brightness(1.08) drop-shadow(0 0 10px #ffe161); }
+  to   { filter: brightness(1.33) drop-shadow(0 0 24px #ffd700) drop-shadow(0 0 32px #ffe161); }
+}
+
 .equip-myth {
   color: #b366ff;
   font-weight: bold;
   text-shadow:
-    0 0 7px #d76bff,
-    0 0 18px #a559f3;
+    0 0 13px #d76bff,
+    0 0 24px #a559f3,
+    0 0 38px #b366ff;
+  animation: myth-glow 1.4s infinite alternate;
+  letter-spacing: 1.15px;
 }
+@keyframes myth-glow {
+  from { filter: brightness(1.10) drop-shadow(0 0 11px #cdaaff); }
+  to   { filter: brightness(1.38) drop-shadow(0 0 23px #b366ff) drop-shadow(0 0 27px #a559f3); }
+}
+
 .equip-inferno {
   color: #ff2424;
   font-weight: bold;
   font-size: 18px;
-  letter-spacing: 1.3px;
+  letter-spacing: 1.4px;
   text-shadow:
-    0 0 6px #fa2525,
-    0 0 16px #ff2323,
-    0 0 24px #ff3939,
-    0 0 42px #ff6868;
-  filter: brightness(1.22) drop-shadow(0 0 5px #ff6464);
-  animation: doomglow 1.2s infinite alternate;
+    0 0 15px #fa2525,
+    0 0 38px #ff2323,
+    0 0 60px #ff3939,
+    0 0 90px #ff6868;
+  filter: brightness(1.28) drop-shadow(0 0 12px #ff6464);
+  animation: doomglow 0.93s infinite alternate, inferno-blink 1.8s infinite alternate;
 }
 @keyframes doomglow {
-  from { text-shadow: 0 0 10px #ff2323, 0 0 35px #ff6d6d; }
-  to   { text-shadow: 0 0 22px #ff5656, 0 0 55px #ff2323; }
+  from { text-shadow: 0 0 26px #ff2323, 0 0 55px #ff6d6d; }
+  to   { text-shadow: 0 0 45px #ff5656, 0 0 95px #ff2323; }
+}
+@keyframes inferno-blink {
+  from { opacity: 0.96; }
+  to   { opacity: 1; filter: brightness(1.39) drop-shadow(0 0 18px #ff2323); }
 }
     .log { border: 1px solid #222; background: #191934; margin: 16px 0; border-radius: 10px; min-height: 120px; padding: 14px; font-size:17px;}
    .inv-btn {
@@ -844,7 +871,7 @@ log(`<b>[소지품]</b> (${user.inv.length}/${inventoryLimit})<br>${invhtml}<br>
 }
 function showCombineUI() {
   let html = `<b>[아이템 합성]</b><br>
-  <span style="color:#ffe161">동일 등급/부위 아이템 2개를 조합해 상위 등급을 얻을 수 있습니다.<br>
+  <span style="color:#ffe161">동일 등급 아이템 2개를 조합해 상위 등급을 얻을 수 있습니다.<br>
   (유일 등급은 조합 불가, 실패 시 재료 소멸!)</span><br><br>`;
 
   let valid = ["레어", "유니크", "에픽"];
@@ -860,28 +887,27 @@ function showCombineUI() {
       html += `<b>${rarity} (${candidates.length}개)</b><br>`;
       for (let i = 0; i < candidates.length; i++) {
         for (let j = i + 1; j < candidates.length; j++) {
-          if (candidates[i].slot !== candidates[j].slot) continue;
           let cost = combineCost(rarity, user.level);
-html += `
-  <div class="equipitem combine2row">
-    <div class="combine-itembox">${itemDisplay(candidates[i])}</div>
-    <div style="font-size:16px;font-weight:bold;text-align:center;margin:4px 0 4px 0;">+</div>
-    <div class="combine-itembox">${itemDisplay(candidates[j])}</div>
-    <div class="combine-btnbox">
-      <button class="inv-btn"
-        onclick="combineItem('${rarity}',${candidates[i]._invIdx},${candidates[j]._invIdx})">
-        합성 (${cost}G, ${Math.round(combineRates[rarity] * 100)}%)
-      </button>
-    </div>
-  </div>
-`;
+          html += `
+            <div class="equipitem combine2row">
+              <div class="combine-itembox">${itemDisplay(candidates[i])}</div>
+              <div style="font-size:16px;font-weight:bold;text-align:center;margin:4px 0 4px 0;">+</div>
+              <div class="combine-itembox">${itemDisplay(candidates[j])}</div>
+              <div class="combine-btnbox">
+                <button class="inv-btn"
+                  onclick="combineItem('${rarity}',${candidates[i]._invIdx},${candidates[j]._invIdx})">
+                  합성 (${cost}G, ${Math.round(combineRates[rarity] * 100)}%)
+                </button>
+              </div>
+            </div>
+          `;
         }
       }
     }
   });
 
   if (!found) {
-    html += `<div style='color:#888'>합성 가능한 아이템(동일 등급/부위 2개)이 없습니다.</div>`;
+    html += `<div style='color:#888'>합성 가능한 아이템(동일 등급 2개)이 없습니다.</div>`;
   }
 
   html += `<br><button class="inv-btn" onclick="showInv()">돌아가기</button>`;
@@ -895,7 +921,7 @@ function combineItem(rarity, idx1, idx2) {
   if (!item1 || !item2 || item1.rarity !== rarity || item2.rarity !== rarity || item1.unique || item2.unique) {
     log('같은 등급의 일반 아이템 2개가 필요합니다.'); return;
   }
-  if (item1.slot !== item2.slot) { log('같은 부위의 아이템 2개가 필요합니다.'); return; }
+  // ★★ 부위 체크 삭제! ★★
   let cost = combineCost(rarity, user.level);
   if (user.gold < cost) { log('골드가 부족합니다.'); return; }
   user.gold -= cost;
@@ -905,7 +931,8 @@ function combineItem(rarity, idx1, idx2) {
   if (Math.random() < combineRates[rarity]) {
     let nextRarity = rarity === "레어" ? "유니크" : rarity === "유니크" ? "에픽" : "레전더리";
     let newItem = makeItem(false, false, null, nextRarity);
-    newItem.slot = item1.slot; // 동일 슬롯 유지
+    // 결과물 부위는 첫 번째 아이템을 따라감
+    newItem.slot = item1.slot;
     addInv(newItem);
     log(`<b>합성 성공!</b> [${rarity} 2개] → [${nextRarity} 1개]<br>${itemDisplay(newItem)}<br>
       <button class="inv-btn" onclick="showCombineUI()">다시 합성</button>
@@ -917,6 +944,7 @@ function combineItem(rarity, idx1, idx2) {
   }
   updateUser();
 }
+
 function sellAllInv(){
   if(user.inv.length === 0){
     log("판매할 아이템이 없습니다."); return;
